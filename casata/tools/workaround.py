@@ -5,7 +5,7 @@
 Tools for working around problems in CASA which areconsidered fixable
 in the future
 """
-
+import os
 import tempfile
 import shutil
 
@@ -17,7 +17,7 @@ def fixPointingFill(msin):
     The current implementation is to export to uvfits and reimport and
     then reuse the pointing table
     """
-    fitsname=tempfile.mktemp(suffix="fits")
+    fitsname=tempfile.mktemp(suffix=".fits")
     exportuvfits(vis=msin,
                  fitsfile=fitsname,
                  datacolumn="data",
@@ -32,10 +32,11 @@ def fixPointingFill(msin):
                  multisource=True,
                  combinespw=True,
                  writestation=True)
-    msnewname=tempfile.mktemp(suffix="ms")
+    msnewname=tempfile.mktemp(suffix=".ms")
     importuvfits(fitsfile=fitsname,
                  vis=msnewname,
                  antnamescheme="old")
+    os.remove(fitsname)
     oldpoint=os.path.join(msin,
                           "POINTING")
     newpoint=os.path.join(msnewname,
