@@ -32,10 +32,10 @@ def mkDelaySpW(msin,
            parameter=[x[1] for x in delayl])
     return calname
 
-def mkBandChn(msin,
-              calfield,
-              spw,
-              precal=None):
+def mkBandpassChn(msin,
+                  calfield,
+                  spw,
+                  precal=None):
     """
     Calibrate the bandpass on a per-channel basis
     """
