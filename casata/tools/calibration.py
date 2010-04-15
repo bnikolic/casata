@@ -31,6 +31,33 @@ def mkDelaySpW(msin,
            pol="",
            parameter=[x[1] for x in delayl])
     return calname
+
+def mkBandChn(msin,
+              calfield,
+              spw,
+              precal=None):
+    """
+    Calibrate the bandpass on a per-channel basis
+    """
+    cb.open(msin)
+    cb.selectvis(spw=str(spw),
+                 field=calfield)
+    pref,junk=os.path.splitext(os.path.basename(msin))
+    calname=pref+".B"
+    cb.setsolve(table=calname,    
+                type="B",
+                t="inf",
+                combine="scan",
+                minblperant=2,
+                solnorm=False,
+                minsnr=-2)    
+    if precal:
+        cb.setapply(table=precal,
+                    spwmap=[spw])   
+    cb.solve()
+    cb.close()
+    return calname
+    
     
 
     
