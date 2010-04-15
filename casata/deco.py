@@ -12,8 +12,8 @@ def casaGlobD(f):
     """
     def rf(*pars, **kwargs):
         print "Function %s only works if defined at top level scope" % f.func_name
-        f(*pars, 
-           **kwargs)
+        return f(*pars, 
+                  **kwargs)
     rf.func_name=f.func_name
     rf.func_doc=f.func_doc
     return rf
