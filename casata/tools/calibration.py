@@ -51,8 +51,8 @@ def mkBandChn(msin,
                 minblperant=2,
                 solnorm=False,
                 minsnr=-2)    
-    if precal:
-        cb.setapply(table=precal,
+    for  p in precal:
+        cb.setapply(table=p,
                     spwmap=[spw])   
     cb.solve()
     cb.close()
