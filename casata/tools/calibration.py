@@ -34,7 +34,6 @@ def mkDelaySpW(msin,
 
     :param antenna: Antenna to apply to
     """
-    pref,junk=os.path.splitext(os.path.basename(msin))
     calname=calTableName(msin, "K", antenna=antenna)
     gencal(vis=msin,
            caltable=calname,
@@ -45,6 +44,7 @@ def mkDelaySpW(msin,
            parameter=[x[1] for x in delayl])
     return calname
 
+@deco.casaGlobD
 def mkBandpassChn(msin,
                   calfield,
                   spw,
@@ -70,6 +70,7 @@ def mkBandpassChn(msin,
     cb.close()
     return calname
 
+@deco.casaGlobD
 def mkGainT(msin,
             calfield,
             spw,
@@ -77,8 +78,9 @@ def mkGainT(msin,
     """
     Compute the time-variable gain. Incomplete
     """
-    pref,junk=os.path.splitext(os.path.basename(msin))
-    calname=pref+".G"
+    calname=calTableName(msin, 
+                         "G", 
+                         spw=spw)
     gaincal(vis=msn,
             caltable=calname,
             field=calfield,
@@ -86,7 +88,6 @@ def mkGainT(msin,
             selectdata=True,
             solint="60s",
             gaintable=precal,
-            spwmap=[[i],[i]],
             combine="",refant="0",minblperant=2,minsnr=-1,solnorm=False,
             gaintype="G",calmode="ap",
             )
