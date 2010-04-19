@@ -74,7 +74,8 @@ def mkBandpassChn(msin,
 def mkGainT(msin,
             calfield,
             spw,
-            precal=None):
+            precal=None,
+            spwmap=[]):
     """
     Compute the time-variable gain. Incomplete
     """
@@ -88,9 +89,14 @@ def mkGainT(msin,
             selectdata=True,
             solint="60s",
             gaintable=precal,
-            combine="",refant="0",minblperant=2,minsnr=-1,solnorm=False,
-            gaintype="G",calmode="ap",
-            )
+            combine="",
+            refant="0",
+            minblperant=2,
+            minsnr=-1,
+            solnorm=False,
+            gaintype="G",
+            calmode="ap",
+            spwmap=[])
     return calname
     
     
