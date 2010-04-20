@@ -8,7 +8,8 @@ Tools for imaging
 import os
 
 import casata
-from  casata import deco
+from  casata import deco, tools
+from casata.tools import ctools
 
 def imageName(msin,
               field,
@@ -47,7 +48,7 @@ def dirty(msin,
 
     :param cell: Cell size in arcseconds 
     """
-    im=casac.homefinder.find_home_by_name('imagerHome').create()
+    im=ctools.get("im")
     im.open(msin)
     im.selectvis(field=field,
                  spw=spw)
