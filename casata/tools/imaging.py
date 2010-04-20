@@ -12,7 +12,7 @@ from  casata import deco
 
 def imageName(msin,
               field,
-              algo,
+              algo="hogbom",
               **kwargs):
     """
     Aut-generated names for images
@@ -30,7 +30,8 @@ def simpleClean(msin,
     """
     clean(vis=msin,
           imagename=imageName(msin, 
-                              field=field),
+                              field=field,
+                              ),
           field=field,
           **kwargs)    
 
