@@ -8,7 +8,9 @@ building layers upon layers!)
 
 import casac
 
+# Map from usual short names to the "homes"
 _toolMap= {"im" : "imagerHome",
+           "cb" : "calibraterHome"
            }
 
 def get(name):
@@ -21,4 +23,37 @@ def get(name):
     t=casac.homefinder.find_home_by_name(_toolMap[name]).create()
     return t
 
+# Map from parameter names to their descriptions and functions to
+# verify them
+_stdParVer={"vis": ("Visibility set (=measurement set?) to operate on",
+                    [])}
 
+def addPosArgs(args, expect,
+               kwargs):
+    """
+    Add positinoal arguments to the keyworded dictionary
+    """
+    if len(args) > len(expect):
+        raise "Too many positional arguments, was expecting " + str(expect)
+    for a, e in zip(args, expect):
+        if e in kwargs.keys():
+            raise "Positional argument clashes with keyword"
+        else:
+            kwargs[e]=a
+    
+
+def gencal(*args,
+            **kwargs):
+    """
+    (a replacement for the gencal task)
+    """
+    addPosArgs(args, 
+               ["vis", "caltable"],
+               kwargs)
+    cb=get("cb")
+    cb.open(kwargs["vis"])
+    kwargs.pop("vis")
+    cb.specifycal(**kwargs)    
+    cb.close()
+    
+        
