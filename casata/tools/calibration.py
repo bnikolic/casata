@@ -8,8 +8,8 @@ Tools for calibration
 import os
 
 import casata
-from  casata import deco
-
+from  casata import deco, tools
+from casata.tools import  ctools
 def calTableName(msin,
                  caltype,
                  overwrite=True,
@@ -23,7 +23,7 @@ def calTableName(msin,
         res=res+"."+k+str(kwargs[k])
     return res
 
-@deco.casaGlobD
+
 def mkDelaySpW(msin,
                delayl,
                antenna):
@@ -35,13 +35,13 @@ def mkDelaySpW(msin,
     :param antenna: Antenna to apply to
     """
     calname=calTableName(msin, "K", antenna=antenna)
-    gencal(vis=msin,
-           caltable=calname,
-           caltype="sbd",
-           spw=",".join([str(x[0]) for x in delayl]),
-           antenna=str(antenna),
-           pol="",
-           parameter=[x[1] for x in delayl])
+    ctools.gencal(vis=msin,
+                  caltable=calname,
+                  caltype="sbd",
+                  spw=",".join([str(x[0]) for x in delayl]),
+                  antenna=str(antenna),
+                  pol="",
+                  parameter=[x[1] for x in delayl])
     return calname
 
 @deco.casaGlobD
