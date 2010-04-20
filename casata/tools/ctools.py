@@ -6,6 +6,8 @@ Tools for handling CASA "tools" (that is I guess what you get for
 building layers upon layers!)
 """
 
+import os
+
 import casac
 
 # Map from usual short names to the "homes"
@@ -23,10 +25,18 @@ def get(name):
     t=casac.homefinder.find_home_by_name(_toolMap[name]).create()
     return t
 
+def isMS(msin):
+    """
+    Check if a measurement set exists
+    """
+    if not os.access(msin, 
+                     os.F_OK):
+        raise "Could not find measurement set"+msin
+
 # Map from parameter names to their descriptions and functions to
 # verify them
 _stdParVer={"vis": ("Visibility set (=measurement set?) to operate on",
-                    [])}
+                    [isMS, ])}
 
 def addPosArgs(args, expect,
                kwargs):
@@ -40,6 +50,16 @@ def addPosArgs(args, expect,
             raise "Positional argument clashes with keyword"
         else:
             kwargs[e]=a
+
+def checkArgs(kwargs):
+    """
+    Check arguments with standard names using their checker functions
+    """
+    for k in kwargs:
+        if k in _stdParVer.keys():
+            doc, cl=_stdParVer[k]
+            for c in cl:
+                c(kwargs[k])
     
 
 def gencal(*args,
@@ -50,6 +70,7 @@ def gencal(*args,
     addPosArgs(args, 
                ["vis", "caltable"],
                kwargs)
+    checkArgs(kwargs)
     cb=get("cb")
     cb.open(kwargs["vis"])
     kwargs.pop("vis")
