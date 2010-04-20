@@ -44,7 +44,7 @@ def mkDelaySpW(msin,
                   parameter=[x[1] for x in delayl])
     return calname
 
-@deco.casaGlobD
+
 def mkBandpassChn(msin,
                   calfield,
                   spw,
@@ -52,6 +52,7 @@ def mkBandpassChn(msin,
     """
     Calibrate the bandpass on a per-channel basis
     """
+    cb=ctools.get("cb")
     cb.open(msin)
     cb.selectvis(spw=str(spw),
                  field=calfield)
@@ -70,7 +71,7 @@ def mkBandpassChn(msin,
     cb.close()
     return calname
 
-@deco.casaGlobD
+
 def mkGainT(msin,
             calfield,
             spw,
@@ -82,21 +83,21 @@ def mkGainT(msin,
     calname=calTableName(msin, 
                          "G", 
                          spw=spw)
-    gaincal(vis=msin,
-            caltable=calname,
-            field=calfield,
-            spw=str(spw),
-            selectdata=True,
-            solint="60s",
-            gaintable=precal,
-            combine="",
-            refant="0",
-            minblperant=2,
-            minsnr=-1,
-            solnorm=False,
-            gaintype="G",
-            calmode="ap",
-            spwmap=[])
+    ctools.gaincal(vis=msin,
+                   caltable=calname,
+                   field=calfield,
+                   spw=str(spw),
+                   selectdata=True,
+                   solint="60s",
+                   gaintable=precal,
+                   combine="",
+                   refant="0",
+                   minblperant=2,
+                   minsnr=-1,
+                   solnorm=False,
+                   gaintype="G",
+                   calmode="ap",
+                   spwmap=[])
     return calname
     
     
