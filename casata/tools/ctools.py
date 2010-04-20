@@ -55,7 +55,7 @@ _stdParVer={"vis": ("Visibility set (=measurement set?) to operate on",
 def addPosArgs(args, expect,
                kwargs):
     """
-    Add positinoal arguments to the keyworded dictionary
+    Add positional arguments to the keyword parameters dictionary
     """
     if len(args) > len(expect):
         raise "Too many positional arguments, was expecting " + str(expect)
@@ -146,15 +146,15 @@ def gaincal(*args,
     """
     (a replacement for the gaincal task)
     """
-    # Translation from the parameters to the taincal task to actual
-    # parameters to selectvis
+    # Translation from the parameters to the gaincal task to actual
+    # parameters to selectvis function of cb tool
     _cbSelectvisPars_translate= {"timerange": 
                                  "time"}
-
+    # As above but for the setsolve function
     _cbSetsolvePars_translate= { "solint" : "t",
                                  "caltable" : "table",
                                  "calmode" : "apmode"}
-
+    # As above but for the cb.setsolvegainspline function
     _cbSetsolvegainsplinePars_translate = { "caltable" : "table",
                                             "calmode" : "mode"}
     
