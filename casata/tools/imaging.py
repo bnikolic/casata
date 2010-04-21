@@ -9,7 +9,7 @@ import os
 
 import casata
 from  casata import deco, tools
-from casata.tools import ctools
+from casata.tools import ctools, vtasks
 
 def imageName(msin,
               field,
@@ -22,19 +22,19 @@ def imageName(msin,
     pref+=field
     return pref
 
-@deco.casaGlobD
+
 def simpleClean(msin,
                 field,
                 **kwargs):
     """
     A simple clean of the input data
     """
-    clean(vis=msin,
-          imagename=imageName(msin, 
-                              field=field,
-                              ),
-          field=field,
-          **kwargs)    
+    vtasks.clean(vis=msin,
+                 imagename=imageName(msin, 
+                                     field=field,
+                                     ),
+                 field=field,
+                 **kwargs)    
 
 
 def dirty(msin,
