@@ -12,6 +12,8 @@ def timeStr(t):
     """
     Convert numerical time as recorded in the measurement set to
     string that can be used for selection
+
+    If the parameter is iterable, all of its component are converted
     """
     qa=ctools.get("qa")
     tu=qa.quantity()
@@ -27,3 +29,15 @@ def timeStr(t):
         res=qa.time(tu,
                     form=["ymd"])
     return res
+
+
+def mainStrTimes(msname,
+                 rows):
+    """
+    Return string times coresponding to rows in main table
+    """
+    tb=ctools.get("tb")
+    tb.open(msname)
+    times=tb.getcol("TIME")[rows]
+    tb.close()
+    return timeStr(times)

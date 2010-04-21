@@ -13,7 +13,8 @@ import casac
 # Map from usual short names to the "homes"
 _toolMap= {"im" : "imagerHome",
            "cb" : "calibraterHome",
-           "qa" : "quantaHome"
+           "qa" : "quantaHome",
+           "tb" : "tableHome",
            }
 
 def get(name):
