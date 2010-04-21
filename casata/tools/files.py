@@ -21,27 +21,13 @@ def assembleSPWs(msinl,
     r=[]
     for ms, spws in zip(msinl, spwl):
         tms=tempfile.mktemp(suffix=".ms")
-        # Looks like split has a "hidden" 13th parameter? Wonder how
-        # that works?
-        vtasks.split(ms,
-                     tms,
-                     data,
-                     "",
-                     spws,
-                     "",
-                     "",
-                     "",
-                     "",
-                     "",
-                     "",
-                     "",
-                     "")
+        vtasks.split(vis=ms,
+                     spw=spws,
+                     outputvis=tms,
+                     datacolumn=data)
         r.append(tms)
-    vtasks.concat(r,
-                  msout,
-                  "",
-                  "",
-                  False)
+    vtasks.concat(vis=r,
+                  concatvis=msout)
     for tms in r:
         shutil.rmtree(tms)
             
