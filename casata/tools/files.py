@@ -11,9 +11,9 @@ import shutil
 
 import casata
 from  casata import deco
+from casata.tools import vtasks
 
 
-@deco.casaGlobD
 def assembleSPWs(msinl,
                  spwl,
                  msout,
@@ -21,13 +21,27 @@ def assembleSPWs(msinl,
     r=[]
     for ms, spws in zip(msinl, spwl):
         tms=tempfile.mktemp(suffix=".ms")
-        split(vis=ms,
-              spw=spws,
-              outputvis=tms,
-              datacolumn=data)
+        # Looks like split has a "hidden" 13th parameter? Wonder how
+        # that works?
+        vtasks.split(ms,
+                     tms,
+                     data,
+                     "",
+                     spws,
+                     "",
+                     "",
+                     "",
+                     "",
+                     "",
+                     "",
+                     "",
+                     "")
         r.append(tms)
-    concat(vis=r,
-           concatvis=msout)
+    vtasks.concat(r,
+                  msout,
+                  "",
+                  "",
+                  False)
     for tms in r:
         shutil.rmtree(tms)
             
