@@ -13,3 +13,7 @@ from clean import clean
 from clearcal import clearcal
 from importvla import importvla
 from viewer import viewer
+from listobs import listobs
+from plotms import plotms
+from flagmanager import flagmanager
+from flagdata import flagdata
