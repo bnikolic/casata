@@ -14,12 +14,15 @@ from casata.tools import ctools, vtasks, files
 def imageName(msin,
               field,
               algo="hogbom",
+              spw=None,
               **kwargs):
     """
     Aut-generated names for images
     """
     pref,junk=os.path.splitext(os.path.basename(msin))
     pref+=field
+    if spw:
+        pref+=(".S"+str(spw))
     return pref
 
 
@@ -30,7 +33,8 @@ def simpleClean(msin,
     A simple clean of the input data
     """
     imagename=imageName(msin, 
-                        field=field)
+                        field=field,
+                        **kwargs)
     files.rmClean(imagename)
     vtasks.clean(vis=msin,
                  imagename=imagename,
