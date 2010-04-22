@@ -75,10 +75,11 @@ def mkBandpassChn(msin,
 def mkGainT(msin,
             calfield,
             spw,
-            precal=None,
+            precal=[],
             spwmap=[]):
     """
-    Compute the time-variable gain. Incomplete
+    Compute the time-variable antenna-based gain. Incomplete
+
     """
     calname=calTableName(msin, 
                          "G", 

@@ -31,3 +31,13 @@ def assembleSPWs(msinl,
     for tms in r:
         shutil.rmtree(tms)
             
+
+def rmClean(pref):
+    """
+    Remove the products of clean
+    """
+    for post in ["psf", "flux", "residual", "image", "model"]:
+        dname=pref+"."+post
+        if os.access(dname, os.F_OK):
+            shutil.rmtree(dname)
+    
