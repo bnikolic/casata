@@ -48,7 +48,7 @@ def mkDelaySpW(msin,
 def mkBandpassChn(msin,
                   calfield,
                   spw,
-                  precal=None):
+                  precal=[]):
     """
     Calibrate the bandpass on a per-channel basis
     """
