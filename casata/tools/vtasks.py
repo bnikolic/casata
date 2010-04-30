@@ -17,3 +17,6 @@ from listobs import listobs
 from plotms import plotms
 from flagmanager import flagmanager
 from flagdata import flagdata
+from blcal import blcal
+from plotcal import plotcal
+from browsetable import browsetable

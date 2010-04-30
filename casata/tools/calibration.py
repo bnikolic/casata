@@ -9,7 +9,8 @@ import os
 
 import casata
 from  casata import deco, tools
-from casata.tools import  ctools
+from casata.tools import  ctools, vtasks
+
 def calTableName(msin,
                  caltype,
                  overwrite=True,
@@ -102,5 +103,24 @@ def mkGainT(msin,
     return calname
     
     
-
+def mkGainBl(msin,
+             calfield,
+             spw,
+             precal=[],
+             spwmap=[]):
+    """
+    Compute the baseline-dependent gain calibration 
+    """
+    calname=calTableName(msin, 
+                         "BL", 
+                         spw=spw)    
+    vtasks.blcal(vis=msin,
+                 caltable=calname,
+                 field=calfield,
+                 spw=str(spw),
+                 solint="inf",
+                 gaintable=precal,
+                 spwmap=spwmap,
+                 gaincurve=False,)
+    return calname
     
