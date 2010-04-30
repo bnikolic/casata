@@ -21,11 +21,11 @@ def timeStr(t):
     if hasattr(t, "__iter__"):
         res=[]
         for x in t:
-            tu["value"]=x
+            tu["value"]=float(x)
             res.append(qa.time(tu,
                                form=["ymd"]))
     else:
-        tu["value"]=t
+        tu["value"]=float(t)
         res=qa.time(tu,
                     form=["ymd"])
     return res
