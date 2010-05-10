@@ -7,6 +7,10 @@ Tools for dealing with pointing information in CASA
 import scipy
 import scipy.interpolate
 
+import casata
+from  casata import deco, tools
+from casata.tools import ctools, vtasks, files
+
 def offsetAzEl(msin,
                tab=None):
     """
@@ -19,6 +23,7 @@ def offsetAzEl(msin,
     none given, will use the main table
 
     """
+    tb=ctools.get("tb")
     tb.open(msin)
     if tab is None:
         maintime=tb.getcol("TIME")
