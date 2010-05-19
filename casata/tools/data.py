@@ -26,6 +26,8 @@ def buildquery(ms,
         q+=("SCAN_NUMBER==%i &&" % kwargs["scan"])
     if kwargs.get("subscan") is not None:
         q+=sub_scan_q(ms, kwargs["subscan"])
+    if kwargs.get("spw") is not None:
+        q+=spw_q(ms, kwargs["spw"])
     return q[:-2]
 
 def sub_scan_q(ms,
@@ -40,7 +42,19 @@ def sub_scan_q(ms,
     if len(m) > 1:
         raise "Multiple matches, cant do this yet"
     return ("STATE_ID==%i &&" % m[0][0])
-    
+
+def spw_q(ms,
+          spw):
+    """
+    Figure out query to select a signle spectral window
+    """
+    tb=ctools.get("tb")
+    tb.open(ms+"/DATA_DESCRIPTION")
+    s=tb.getcol("SPECTRAL_WINDOW_ID")
+    m=(s==spw).nonzero()
+    if len(m) > 1:
+        raise "Multiple matches, cant do this yet"
+    return ("DATA_DESC_ID==%i &&" % m[0][0])    
 
 # These are the columns that must be fetched from other tables
 _speccols=["POINTING_OFFSET"]
