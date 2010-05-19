@@ -7,7 +7,7 @@ Tools for extracting data from MS
 
 import casata
 from  casata import deco, tools
-from casata.tools import ctools
+from casata.tools import ctools, pointing
 
 def buildquery(ms,
                **kwargs):
@@ -42,6 +42,9 @@ def sub_scan_q(ms,
     return ("STATE_ID==%i &&" % m[0][0])
     
 
+# These are the columns that must be fetched from other tables
+_speccols=["POINTING_OFFSET"]
+
 def vis(ms,
         cols=[],
         **kwargs):
@@ -60,8 +63,12 @@ def vis(ms,
     tb.open(ms)
     tbres=tb.query(buildquery(ms, **kwargs))
     res=[]
-    for col in cols:
+    maincols=[x for x in cols if x not in _speccols]
+    for col in maincols:
         res.append(tbres.getcol(col))
+    if "POINTING_OFFSET" in cols:
+        res.append(pointing.offsetAzEl(ms, 
+                                       tbres))
     return res
     
     
