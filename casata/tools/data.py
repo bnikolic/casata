@@ -78,14 +78,15 @@ def vis(ms,
     tbres=tb.query(buildquery(ms, **kwargs))
     res=[]
     maincols=[x for x in cols if x not in _speccols]
-    for col in maincols:
-        res.append(tbres.getcol(col))
-    if "POINTING_OFFSET" in cols:
-        for a in ["a1", "a2"]:
-            if kwargs.get(a) is not None:
-                res.append(pointing.offsetAzEl(ms, 
-                                               tbres,
-                                               a=kwargs[a]))
+    for col in cols:
+        if col in maincols:
+            res.append(tbres.getcol(col))
+        elif col == "POINTING_OFFSET":
+            for a in ["a1", "a2"]:
+                if kwargs.get(a) is not None:
+                    res.append(pointing.offsetAzEl(ms, 
+                                                   tbres,
+                                                   a=kwargs[a]))
     return res
     
     
