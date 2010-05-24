@@ -20,3 +20,4 @@ from flagdata import flagdata
 from blcal import blcal
 from plotcal import plotcal
 from browsetable import browsetable
+from gaincal import gaincal
