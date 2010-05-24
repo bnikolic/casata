@@ -81,8 +81,11 @@ def vis(ms,
     for col in maincols:
         res.append(tbres.getcol(col))
     if "POINTING_OFFSET" in cols:
-        res.append(pointing.offsetAzEl(ms, 
-                                       tbres))
+        for a in ["a1", "a2"]:
+            if kwargs.get(a) is not None:
+                res.append(pointing.offsetAzEl(ms, 
+                                               tbres,
+                                               a=kwargs[a]))
     return res
     
     
