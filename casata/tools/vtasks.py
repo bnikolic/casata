@@ -21,3 +21,5 @@ from blcal import blcal
 from plotcal import plotcal
 from browsetable import browsetable
 from gaincal import gaincal
+from importuvfits import importuvfits
+from exportuvfits import exportuvfits

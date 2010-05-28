@@ -62,7 +62,7 @@ def dirty(msin,
                    cellx="%garcsec"% cell,
                    celly="%garcsec"% cell,
                    phasecenter=0,
-                   spw=[1])
+                   spw=[spw])
 
     fnameout=imageName(msin, 
                        field=field,

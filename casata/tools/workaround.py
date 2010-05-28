@@ -11,8 +11,8 @@ import shutil
 
 import casata
 from  casata import deco
+from casata.tools import ctools, vtasks
 
-@deco.casaGlobD
 def fixPointingFill(msin):
     """
     Fix problems with pointing table in present in some datasets
@@ -23,24 +23,24 @@ def fixPointingFill(msin):
     Zwaan's mapN3256B6new.py.txt
     """
     fitsname=tempfile.mktemp(suffix=".fits")
-    exportuvfits(vis=msin,
-                 fitsfile=fitsname,
-                 datacolumn="data",
-                 field="",
-                 spw="0",
-                 antenna="",
-                 timerange="",
-                 nchan=-1,
-                 start=0,
-                 width=1,
-                 writesyscal=False,
-                 multisource=True,
-                 combinespw=True,
-                 writestation=True)
+    vtasks.exportuvfits(vis=msin,
+                        fitsfile=fitsname,
+                        datacolumn="data",
+                        field="",
+                        spw="0",
+                        antenna="",
+                        timerange="",
+                        nchan=-1,
+                        start=0,
+                        width=1,
+                        writesyscal=False,
+                        multisource=True,
+                        combinespw=True,
+                        writestation=True)
     msnewname=tempfile.mktemp(suffix=".ms")
-    importuvfits(fitsfile=fitsname,
-                 vis=msnewname,
-                 antnamescheme="old")
+    vtasks.importuvfits(fitsfile=fitsname,
+                        vis=msnewname,
+                        antnamescheme="old")
     os.remove(fitsname)
     oldpoint=os.path.join(msin,
                           "POINTING")
