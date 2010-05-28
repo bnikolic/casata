@@ -19,9 +19,13 @@ def buildquery(ms,
     """
     q=""
     if  kwargs.get("a1") is not None:
-        q+=("ANTENNA1==%i &&" % kwargs["a1"])
+        q+=antenna_q(ms,
+                     kwargs["a1"],
+                     1)
     if kwargs.get("a2")  is not None:
-        q+=("ANTENNA2==%i &&" % kwargs["a2"])
+        q+=antenna_q(ms,
+                     kwargs["a2"],
+                     2)
     if kwargs.get("scan")is not None:
         q+=("SCAN_NUMBER==%i &&" % kwargs["scan"])
     if kwargs.get("subscan") is not None:
@@ -29,6 +33,26 @@ def buildquery(ms,
     if kwargs.get("spw") is not None:
         q+=spw_q(ms, kwargs["spw"])
     return q[:-2]
+
+def antenna_q(ms,
+              a,
+              ano):
+    """
+    Sub-query on antennas
+
+    :param a: Antenna to select.
+    """
+    if type(a) is str:
+        tb=ctools.get("tb")
+        tb.open(ms+"/ANTENNA")
+        s=tb.getcol("NAME")
+        m=(s==a).nonzero()
+        if len(m) > 1:
+            raise "Multiple matches, cant do this yet"
+        a=m[0][0]
+    return ("ANTENNA%i==%i &&" % (ano,
+                                  a))
+        
 
 def sub_scan_q(ms,
                ss):

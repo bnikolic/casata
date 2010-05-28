@@ -23,3 +23,4 @@ from browsetable import browsetable
 from gaincal import gaincal
 from importuvfits import importuvfits
 from exportuvfits import exportuvfits
+from plotxy import plotxy
