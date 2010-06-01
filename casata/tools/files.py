@@ -36,7 +36,7 @@ def rmClean(pref):
     """
     Remove the products of clean
     """
-    for post in ["psf", "flux", "residual", "image", "model"]:
+    for post in ["psf", "flux", "residual", "image", "model", "boxmask"]:
         dname=pref+"."+post
         if os.access(dname, os.F_OK):
             shutil.rmtree(dname)

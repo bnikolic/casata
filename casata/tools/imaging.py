@@ -23,6 +23,8 @@ def imageName(msin,
     pref+=field
     if spw:
         pref+=(".S"+str(spw))
+    if algo in ["dirty"]:
+        pref+=("."+algo)
     return pref
 
 
@@ -56,18 +58,75 @@ def dirty(msin,
     im=ctools.get("im")
     im.open(msin)
     im.selectvis(field=field,
-                 spw=spw)
+                 spw=spw,
+                 usescratch=True)
     im.defineimage(nx=npix, 
                    ny=npix,
                    cellx="%garcsec"% cell,
                    celly="%garcsec"% cell,
-                   phasecenter=0,
+                   phasecenter=int(field),
                    spw=[spw])
 
     fnameout=imageName(msin, 
                        field=field,
+                       spw=spw,
                        algo="dirty")
     im.makeimage(type='corrected',
                  image=fnameout)
+
+def cleanTest(msin,
+              field,
+              spw="",
+              npix=512,
+              cell=1.0,
+              niter=1000,
+              threshold=0.0,
+              weight="uniform",
+              gain=0.1,
+              boxmask=None,
+              mask=""
+              ):
+    """
+    A test of rework of the clean algorithm
+    """
+    imagename=imageName(msin, 
+                        field=field,
+                        spw=spw)
+    im=ctools.get("im")
+    qa=ctools.get("qa")
+    files.rmClean(imagename)
+    im.selectvis(vis=msin,
+                 spw=spw,
+                 field=field,
+                 usescratch=True)
+    im.defineimage(nx=npix, 
+                   cellx='%g arcsec'% cell,
+                   celly='%g arcsec'% cell,
+                   spw=spw,
+                   phasecenter=int(field))
+    im.weight(weight)
+    if boxmask:
+        mask=imagename+".boxmask"
+        im.boxmask(mask,
+                   boxmask[0],
+                   boxmask[1])
+
+    im.clean(algorithm="hogbom", 
+             model=imagename+".model", 
+             residual=imagename+".residual",
+             image=imagename+".image", 
+             niter=niter,
+             psfimage=imagename+".psf",
+             threshold=qa.quantity(threshold,'mJy'),
+             gain=gain,
+             mask=mask)
+
+    im.done()
+    return [imagename+".image", 
+            imagename+".model", 
+            imagename+".residual",
+            imagename+".psf",]
+
+    
 
     
