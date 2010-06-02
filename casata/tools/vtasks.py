@@ -24,3 +24,4 @@ from gaincal import gaincal
 from importuvfits import importuvfits
 from exportuvfits import exportuvfits
 from plotxy import plotxy
+from bandpass import bandpass
