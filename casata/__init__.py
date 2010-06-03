@@ -5,4 +5,4 @@
 Top level casata module file
 """
 
-__version__ = "0.0.4dev"
+__version__ = "0.0.4"
