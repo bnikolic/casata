@@ -4,6 +4,7 @@
 """
 Tools for extracting data from MS
 """
+import numpy
 
 import casata
 from  casata import deco, tools
@@ -32,6 +33,8 @@ def buildquery(ms,
         q+=sub_scan_q(ms, kwargs["subscan"])
     if kwargs.get("spw") is not None:
         q+=spw_q(ms, kwargs["spw"])
+    if kwargs.get("field") is not None:
+        q+=("FIELD_ID==%i &&" % kwargs["field"])
     return q[:-2]
 
 def antenna_q(ms,
@@ -113,4 +116,34 @@ def vis(ms,
                                                    a=kwargs[a]))
     return res
     
+
+def closurePh(msin,
+              alist,
+              col="DATA",
+              signs=[1, -1 , 1],
+              **kwargs):
+    """
+    The closure phase on a triad of antennas
+
+    :param alist: The three antennas to compute the closure for
+    
+    :param cal: Data column to use, i.e., "DATA", "CORRECTED_DATA" 
+
+    :param signs: The signs with which to combine the phases
+    """
+    if len(alist) != 3:
+        raise "Need three antennas for closure phase"
+    def phase(a1, a2):
+        d=vis(msin, 
+              [col], 
+              a1=a1, 
+              a2=a2, 
+              **kwargs)[0]
+        ph=numpy.degrees(numpy.arctan2(d.imag, 
+                                       d.real))
+        return ph
+    cl=phase(alist[0], alist[1])-phase(alist[0], alist[2])+phase(alist[1], alist[2])
+    cl=(cl+180)%360-180
+    return cl
+
     
