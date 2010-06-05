@@ -99,7 +99,7 @@ def mkGainT(msin,
                    solnorm=False,
                    gaintype="G",
                    calmode="ap",
-                   spwmap=[])
+                   spwmap=spwmap)
     return calname
     
 
