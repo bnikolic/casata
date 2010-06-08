@@ -15,6 +15,7 @@ _toolMap= {"im" : "imagerHome",
            "cb" : "calibraterHome",
            "qa" : "quantaHome",
            "tb" : "tableHome",
+           "at" : "atmosphereHome"
            }
 
 def get(name):
