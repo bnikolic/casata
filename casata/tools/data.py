@@ -146,4 +146,31 @@ def closurePh(msin,
     cl=(cl+180)%360-180
     return cl
 
+def nspw(msin):
+    """
+    The number of spectral windows in this measurement set
+    """
+    tb=ctools.get("tb")
+    tb.open(msin+"/SPECTRAL_WINDOW")
+    return tb.nrows()
+    
+def chfspw(msin,
+         spw):
+    """
+    Return the frequencies of channels in spw
+    """
+    tb=ctools.get("tb")
+    tb.open(msin+"/SPECTRAL_WINDOW")
+    x=tb.getvarcol("CHAN_FREQ")
+    return x["r%i"%spw]
+
+def chwspw(msin,
+           spw):
+    """
+    Return the widths of channels in spw
+    """
+    tb=ctools.get("tb")
+    tb.open(msin+"/SPECTRAL_WINDOW")
+    x=tb.getvarcol("CHAN_WIDTH")
+    return x["r%i"%spw]
     
