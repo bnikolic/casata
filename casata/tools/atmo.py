@@ -5,11 +5,13 @@
 Tools for dealing with the atmosphere
 """
 
+import numpy
+
 import casata
 from  casata import deco, tools
 from casata.tools import  ctools, vtasks
 
-def simAbsModel(fc, fw, fr,
+def simAbsModel(flist,
                 c):
     """
     Create a simple model of the atmospheric absorption
@@ -20,12 +22,11 @@ def simAbsModel(fc, fw, fr,
     """
     at=ctools.get("at")
     at.initAtmProfile()
-    at.initSpectralWindow(1, 
-                          ctools.casac.Quantity(fc, "Hz"),
-                          ctools.casac.Quantity(fw, "Hz"),
-                          ctools.casac.Quantity(fr, "Hz"),
-                          )
-    dry=at.getDryOpacitySpec()
+    at.initSpectralWindow(len(flist),
+                          ctools.casac.Quantity(flist, "Hz"),
+                          ctools.casac.Quantity([1]*len(flist), "Hz"),
+                          ctools.casac.Quantity([0]*len(flist), "Hz"))
+    dry=numpy.array([at.getDryOpacitySpec(x)['dryOpacity'] for x in range(len(flist))])
     return dry
     
     
