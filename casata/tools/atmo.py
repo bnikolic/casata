@@ -17,9 +17,14 @@ def simAbsModel(flist,
     """
     Create a simple model of the atmospheric absorption
 
-    :param fc: Centre frequency to grid to compute for
+    :param flist: Frequencies at which to compute the absorption
 
-    :param c: water vapour column in mm
+    :param c: water vapour column in mm (currently not used!)
+    
+    :param fwidths: Width of each channel
+
+    :returns:  Array of atmospheric *opacities*
+
     """
     at=ctools.get("at")
     at.initAtmProfile()

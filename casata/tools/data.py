@@ -157,7 +157,7 @@ def nspw(msin):
 def chfspw(msin,
          spw):
     """
-    Return the frequencies of channels in spw
+    Return the frequencies of channels in spectral window spw
     """
     tb=ctools.get("tb")
     tb.open(msin+"/SPECTRAL_WINDOW")
@@ -167,7 +167,7 @@ def chfspw(msin,
 def chwspw(msin,
            spw):
     """
-    Return the widths of channels in spw
+    Return the widths of channels in spectral window spw
     """
     tb=ctools.get("tb")
     tb.open(msin+"/SPECTRAL_WINDOW")
