@@ -162,7 +162,7 @@ def chfspw(msin,
     tb=ctools.get("tb")
     tb.open(msin+"/SPECTRAL_WINDOW")
     x=tb.getvarcol("CHAN_FREQ")
-    return x["r%i"%spw]
+    return x["r%i"%(spw+1)][:,0]
 
 def chwspw(msin,
            spw):
@@ -172,5 +172,5 @@ def chwspw(msin,
     tb=ctools.get("tb")
     tb.open(msin+"/SPECTRAL_WINDOW")
     x=tb.getvarcol("CHAN_WIDTH")
-    return x["r%i"%spw]
+    return x["r%i"%(spw+1)][:,0]
     

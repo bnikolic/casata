@@ -26,8 +26,8 @@ def simAbsModel(flist,
     if fwidths is None:
         fwidths=[1]*len(flist)
     at.initSpectralWindow(len(flist),
-                          ctools.casac.Quantity(flist, "Hz"),
-                          ctools.casac.Quantity(fwidths, "Hz"),
+                          ctools.casac.Quantity(list(flist), "Hz"),
+                          ctools.casac.Quantity(list(fwidths), "Hz"),
                           ctools.casac.Quantity([0]*len(flist), "Hz"))
     dry=numpy.array([at.getDryOpacitySpec(x)['dryOpacity'] for x in range(len(flist))])
     return dry
