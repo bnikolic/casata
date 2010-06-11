@@ -9,7 +9,7 @@ import os
 
 import casata
 from  casata import deco, tools
-from casata.tools import  ctools, vtasks
+from casata.tools import  ctools, vtasks, extprog
 
 def calTableName(msin,
                  caltype,
@@ -139,5 +139,16 @@ def mkGainBl(msin,
                  gaintable=precal,
                  spwmap=spwmap,
                  gaincurve=False,)
+    return calname
+    
+def wvrgcal(msin):
+    """
+    Compute the wvr based calibration
+    """
+    calname=calTableName(msin, 
+                         "W")
+    extprog.wvrgcal(msin,
+                    calname,
+                    segfield=True)
     return calname
     

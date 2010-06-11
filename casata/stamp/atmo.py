@@ -20,7 +20,7 @@ def dryAbs(msin):
     pref,junk=os.path.splitext(os.path.basename(msin))
     for spw in range(data.nspw(msin)):
         f=data.chfspw(msin, spw)
-        if len(f) == 1:
+        if len(f) < 5:
             continue
         a=atmo.simAbsModel(f,
                            0,
