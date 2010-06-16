@@ -10,11 +10,13 @@ option syntax
 import subprocess
 
 def call(progname,
+         *pargs,
          **kwargs):
     """
     Call progname converting kwargs into standard gnu syntax
     """
     args=[progname]
+    args.extend(pargs)
     for k in kwargs.keys():
         args.append("--%s" %k)
         if kwargs[k] is True:
@@ -26,7 +28,7 @@ def call(progname,
 
 
 def wvrgcal(*args,
-             **kwargs):
+            **kwargs):
     """
     Call the wvrgcal program 
     """
@@ -36,7 +38,8 @@ def wvrgcal(*args,
         kwargs["output"]=args[1]
     if len(args)>2:
         raise "This program can only understand two positional parameters"
-    call("wvrgcal", 
+    cmdline=kwargs.pop("cmdline", "wvrgcal")
+    call(*cmdline.split(), 
          **kwargs)
         
 

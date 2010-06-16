@@ -174,3 +174,22 @@ def chwspw(msin,
     x=tb.getvarcol("CHAN_WIDTH")
     return x["r%i"%(spw+1)][:,0]
     
+def antname(msin,
+            a):
+    """
+    Return name of antenna number a
+    """
+    tb=ctools.get("tb")
+    tb.open(msin+"/ANTENNA")
+    s=tb.getcol("NAME")
+    return s[a]
+
+def nant(msin):
+    """
+    Return number of antennas
+    """
+    tb=ctools.get("tb")
+    tb.open(msin+"/ANTENNA")
+    s=tb.getcol("NAME")
+    return len(s)
+
