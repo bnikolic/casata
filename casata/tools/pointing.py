@@ -12,11 +12,21 @@ from  casata import deco, tools
 from casata.tools import ctools, vtasks, files
 
 def offsetAzEl(msin,
-               tab=None,
-               a=0):
+               **kwargs):
     """
-    Return offset pointing interpolated onto the time base of another
-    table
+    Return pointing offset
+    """
+    return genPoint(msin,
+                    "POINTING_OFFSET",
+                    **kwargs)
+
+def genPoint(msin,
+             col,
+             tab=None,
+             a=0):
+    """
+    Return pointing table column interpolated onto the time base of
+    another table
     
     :param msin: Input measurement set
 
@@ -34,7 +44,7 @@ def offsetAzEl(msin,
         maintime=tab.getcol("TIME")
     tb.open(msin+"/POINTING")
     pointtime=tb.getcol("TIME")
-    point=tb.getcol("POINTING_OFFSET")
+    point=tb.getcol(col)
     av=tb.getcol("ANTENNA_ID")
     mask=(av==a)
     ipltor=scipy.interpolate.interp1d(pointtime[mask], 

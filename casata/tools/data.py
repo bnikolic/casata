@@ -84,7 +84,8 @@ def spw_q(ms,
     return ("DATA_DESC_ID==%i &&" % m[0][0])    
 
 # These are the columns that must be fetched from other tables
-_speccols=["POINTING_OFFSET"]
+_speccols=["POINTING_OFFSET",
+           "TARGET"]
 
 def vis(ms,
         cols=[],
@@ -112,8 +113,16 @@ def vis(ms,
             for a in ["a1", "a2"]:
                 if kwargs.get(a) is not None:
                     res.append(pointing.offsetAzEl(ms, 
-                                                   tbres,
+                                                   tab=tbres,
                                                    a=kwargs[a]))
+        elif col== "TARGET":
+            for a in ["a1", "a2"]:
+                if kwargs.get(a) is not None:
+                    res.append(pointing.genPoint(ms, 
+                                                 "TARGET",
+                                                 tab=tbres,
+                                                 a=kwargs[a]))
+
     return res
     
 
