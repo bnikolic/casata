@@ -73,7 +73,7 @@ def sub_scan_q(ms,
 def spw_q(ms,
           spw):
     """
-    Figure out query to select a signle spectral window
+    Create a query to select a single spectral window
     """
     tb=ctools.get("tb")
     tb.open(ms+"/DATA_DESCRIPTION")
