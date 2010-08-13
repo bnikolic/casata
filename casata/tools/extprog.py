@@ -18,6 +18,9 @@ def call(progname,
     args=[progname]
     args.extend(pargs)
     for k in kwargs.keys():
+        if kwargs[k] is False:
+            # If options is false assume it is skipped completely
+            continue
         args.append("--%s" %k)
         if kwargs[k] is True:
             # If paremeter is exactly "True" then it is an option only
