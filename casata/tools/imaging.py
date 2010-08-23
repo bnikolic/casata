@@ -20,7 +20,7 @@ def imageName(msin,
     Aut-generated names for images
     """
     pref,junk=os.path.splitext(os.path.basename(msin))
-    pref+=field
+    pref+=("."+field)
     if spw:
         pref+=(".S"+str(spw))
     if algo in ["dirty"]:
