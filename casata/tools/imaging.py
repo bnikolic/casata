@@ -84,10 +84,15 @@ def cleanTest(msin,
               weight="uniform",
               gain=0.1,
               boxmask=None,
+              centmask=None,
               mask=""
               ):
     """
     A test of rework of the clean algorithm
+    
+    :centmask: The clean mask should be the central region of
+    diameter/side length of centmax pixels
+
     """
     imagename=imageName(msin, 
                         field=field,
@@ -105,6 +110,9 @@ def cleanTest(msin,
                    spw=spw,
                    phasecenter=int(field))
     im.weight(weight)
+    if centmask:
+        boxmask=[[npix/2-centmask/2, npix/2-centmask/2],
+                 [npix/2+centmask/2, npix/2+centmask/2]]
     if boxmask:
         mask=imagename+".boxmask"
         im.boxmask(mask,
