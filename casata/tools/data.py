@@ -202,3 +202,26 @@ def nant(msin):
     s=tb.getcol("NAME")
     return len(s)
 
+
+def cal(table,
+        cols=[],
+        **kwargs):
+    """
+    Extract data from a calibration table
+
+    :param cols: List of columns to get
+
+    For example this gets the Gain values for antenna 4 from a gain
+    table named obs2W:
+    
+    >>> data.cal("obs2W", ["GAIN"], a1=4)
+
+    """
+    tb=ctools.get("tb")
+    tb.open(table)
+    tbres=tb.query(buildquery(table, 
+                              **kwargs))
+    res=[]
+    for col in cols:
+        res.append(tbres.getcol(col))
+    return res
