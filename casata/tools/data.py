@@ -96,8 +96,9 @@ def vis(ms,
     This function should avoid using helper columns like data_id etc
     and instead parse the auxiliary tables to ease interaction. 
 
-    Also it should offer knows columns that are not part of the main
-    table by suitable interpolation
+    Also it should offer some specific known columns that are not part
+    of the main table by suitable interpolation -- currently it
+    supports POINTING_OFFSET and TARGET from the pointing table.
 
     :param cols: List of columns to get
     """
