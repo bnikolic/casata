@@ -147,6 +147,7 @@ def closurePh(msin,
     """
     if len(alist) != 3:
         raise "Need three antennas for closure phase"
+
     def phase(a1, a2):
         d=vis(msin, 
               [col], 
@@ -207,11 +208,22 @@ def nant(msin):
     s=tb.getcol("NAME")
     return len(s)
 
-def nscans(msin):
+def scans(msin):
     """
-    Return the number of scans in the measurement set
+    Return the list of all scans in the measurement set
     """
-    pass
+    tb=ctools.get("tb")
+    tb.open(msin)
+    s=tb.getcol("SCAN_NUMBER")
+    return numpy.unique(s)
+
+def nfields(msin):
+    tb=ctools.get("tb")
+    tb.open(msin+"/FIELD")
+    s=tb.getcol("NAME")
+    return len(s)
+
+
 
 def gFieldData(msin,
                col,
