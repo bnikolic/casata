@@ -17,32 +17,16 @@ def cvPhase(d):
     """
     return numpy.arctan2(d.imag, d.real)
 
-def obsBaselineData(msin,
-                    a1, a2,
-                    spw,
-                    warndrift=1e-2):
+def getPhases(caltable,
+              antno):
     """
-    Compute the phase variation between scans 
-
-    :param a1, a2: Consider the baseline between these two antennas
-
-    :returns: list of tuples (azimuth, elevation, phase, phasrms)
+    Get phases for each scan in caltable  for antenna antno
     """
-    res=[]
-    for sno in data.scans(msin):
-        d=data.vis(msin,
-                   ["DATA", "TARGET"], 
-                   a1=a1, a2=a2, 
-                   spw=spw, 
-                   scan=sno)
-        ph=cvPhase(d[0][0,0])
-        if d[1][0].std() > warndrift or d[1][1].std() > warndrift:
-            print "Antennas seem to have moved a lot during scan %i " % sno
-        res.append( (d[1][0].mean(),
-                     d[1][1].mean(),
-                     ph.mean(),
-                     ph.std()))
-    return res
+    s, g=data.cal(caltable, 
+                  ["FIELD_ID", "GAIN"], 
+                  a1=antno)
+    return s+1, cvPhase(g[0,0])
+    
 
 def calcDirCos(az, el):
     """
@@ -54,19 +38,59 @@ def calcDirCos(az, el):
             numpy.cos(az)*numpy.cos(el),
             numpy.sin(el))
 
-def baselineSolve(obsdata,
+def scanDirCos(msin,
+               warndrift=1e-2):
+    """
+    Dictionary of direction cosines of each scan in the observation
+    """
+    res={}
+    for sno in data.scans(msin):
+        d=data.vis(msin,
+                   ["TARGET"], 
+                   a1=0, 
+                   a2=0, 
+                   spw=0, 
+                   scan=sno)
+        if d[0][0].std() > warndrift or d[0][1].std() > warndrift:
+            print "Antennas seem to have moved a lot during scan %i " % sno
+        res[sno]=calcDirCos(d[0][0].mean(),
+                            d[0][1].mean())
+    return res
+
+def baselineSolve(s, g, dc,
                   wavel):
     """
-    This returns the offsets in the antenna coordinate system.
-    
-    Note that the weighting (as in phaserms) is not yet included
+    This returns the offsets in the antenna coordinate system
+
+    :param s: Array with scan number of each measurement
+
+    :param g: Array with phase of each measurement
+
+    :param dc: Dictionary of direction cosines
+
     """
-    m=numpy.array([calcDirCos(x[0], x[1]) for x in obsdata])
-    b=numpy.array([x[2] for x in obsdata])
+    m=numpy.array([dc[x] for x in s])
+    b=numpy.array(g)
     x=numpy.linalg.lstsq(m, b)[0]
-    return x*wavel/(2*math.pi);
+    return x*wavel/(2*math.pi)
 
 
+def baselineExample(msin):
+    vtasks.gaincal(msin, 
+                   "test.G", 
+                   spw="2", 
+                   gaintype="G", 
+                   calmode="p", 
+                   combine="scan")
+    dc=scanDirCos(msin)
+    wavel=3e8/data.chfspw(msin, 2).mean()
+    for a in range(1, data.nant(msin)):
+        s, p=getPhases("test.G", a)
+        res=baselineSolve(s, p, dc, wavel)
+        print "Offset of antenna %i is %s " % (a, str(res))
+                          
+        
+    
     
                      
                      

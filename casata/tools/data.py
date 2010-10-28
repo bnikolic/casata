@@ -258,8 +258,12 @@ def cal(table,
     """
     tb=ctools.get("tb")
     tb.open(table)
-    tbres=tb.query(buildquery(table, 
-                              **kwargs))
+    subq=buildquery(table, 
+                    **kwargs)
+    if len(subq)>1:
+        tbres=tb.query(subq)
+    else:
+        tbres=tb
     res=[]
     for col in cols:
         res.append(tbres.getcol(col))
