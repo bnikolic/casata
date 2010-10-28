@@ -85,7 +85,8 @@ def spw_q(ms,
 
 # These are the columns that must be fetched from other tables
 _speccols=["POINTING_OFFSET",
-           "TARGET"]
+           "TARGET",
+           "PHASE_DIR"]
 
 def vis(ms,
         cols=[],
@@ -123,7 +124,10 @@ def vis(ms,
                                                  "TARGET",
                                                  tab=tbres,
                                                  a=kwargs[a]))
-
+        elif col=="PHASE_DIR":
+            res.append(gFieldData(ms,
+                                  col,
+                                  tab=tbres))
     return res
     
 
@@ -202,6 +206,28 @@ def nant(msin):
     tb.open(msin+"/ANTENNA")
     s=tb.getcol("NAME")
     return len(s)
+
+def nscans(msin):
+    """
+    Return the number of scans in the measurement set
+    """
+    pass
+
+def gFieldData(msin,
+               col,
+               tab=None):
+    """
+    Get the data from the Field sub-table
+    """
+    tb=ctools.get("tb")
+    if tab is None:
+        tb.open(msin)
+        tab=tb
+    fieldcol=tab.getcol("FIELD_ID")
+    tb.open(msin+"/FIELD")
+    coldata=tb.getcol(col)
+    return numpy.take(coldata,fieldcol,2)
+    
 
 
 def cal(table,
