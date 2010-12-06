@@ -23,6 +23,7 @@ from browsetable import browsetable
 from gaincal import gaincal
 from importuvfits import importuvfits
 from exportuvfits import exportuvfits
+from exportfits import exportfits
 from plotxy import plotxy
 from bandpass import bandpass
 from fringecal import fringecal

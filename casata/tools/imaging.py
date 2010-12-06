@@ -73,6 +73,7 @@ def dirty(msin,
                        algo="dirty")
     im.makeimage(type='corrected',
                  image=fnameout)
+    return fnameout
 
 def cleanTest(msin,
               field,
