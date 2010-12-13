@@ -106,12 +106,13 @@ def mkGainT(msin,
 def mkGainG(msin,
             calfield,
             spw,
+            postf="",
             **kwargs):
     """
     General phase calibration wrapper
     """
     calname=calTableName(msin, 
-                         "G", 
+                         "G"+postf, 
                          spw=spw)    
     vtasks.gaincal(vis=msin,
                    caltable=calname,

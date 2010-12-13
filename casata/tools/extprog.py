@@ -27,7 +27,10 @@ def call(progname,
             pass
         else:
             args.append(str(kwargs[k]))
-    subprocess.call(args)
+    r=subprocess.call(args)
+    if r != 0:
+        print "Warning: external program returned error status -- inspect the output"
+    return r
 
 
 def wvrgcal(*args,
