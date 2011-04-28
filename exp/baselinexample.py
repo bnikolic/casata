@@ -6,6 +6,7 @@
 Simple example of how to compute the baseline errors from phase errors
 """
 
+import math
 import numpy
 
 import casata, casata.tools
