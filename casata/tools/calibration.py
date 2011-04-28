@@ -143,6 +143,7 @@ def mkGainBl(msin,
     return calname
     
 def wvrgcal(msin,
+            wvrflag=[],
             cmdline="wvrgcal"):
     """
     Compute the wvr based calibration
@@ -151,6 +152,7 @@ def wvrgcal(msin,
                          "W")
     extprog.wvrgcal(msin,
                     calname,
+                    wvrflag=wvrflag,
                     cmdline=cmdline)
     return calname
     

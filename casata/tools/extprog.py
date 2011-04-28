@@ -21,11 +21,15 @@ def call(progname,
         if kwargs[k] is False:
             # If options is false assume it is skipped completely
             continue
-        args.append("--%s" %k)
         if kwargs[k] is True:
             # If paremeter is exactly "True" then it is an option only
-            pass
+            args.append("--%s" %k)
+        elif type(kwargs[k]) in  [list, tuple]:
+            for v in kwargs[k]:
+                args.append("--%s" %k)
+                args.append(str(v))
         else:
+            args.append("--%s" %k)
             args.append(str(kwargs[k]))
     r=subprocess.call(args)
     if r != 0:
