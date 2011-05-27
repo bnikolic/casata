@@ -26,7 +26,6 @@ from exportuvfits import exportuvfits
 from exportfits import exportfits
 from plotxy import plotxy
 from bandpass import bandpass
-from fringecal import fringecal
 from gencal import gencal
 from plotxy import plotxy
 from clearstat import clearstat
