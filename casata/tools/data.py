@@ -35,6 +35,8 @@ def buildquery(ms,
         q+=spw_q(ms, kwargs["spw"])
     if kwargs.get("field") is not None:
         q+=("FIELD_ID==%i &&" % kwargs["field"])
+    if kwargs.get("intent") is not None:
+        q+=scan_intent_q(ms, kwargs.get("intent"))
     return q[:-2]
 
 def antenna_q(ms,
@@ -69,6 +71,22 @@ def sub_scan_q(ms,
     if len(m) > 1:
         raise "Multiple matches, cant do this yet"
     return ("STATE_ID==%i &&" % m[0][0])
+
+def scan_intent_q(ms, si):
+    """
+    Query on scan intent
+    """
+    tb=ctools.get("tb")
+    tb.open(ms+"/STATE")
+    s=tb.getcol("OBS_MODE")
+    m=(s==si).nonzero()
+    q="("
+    for i in m[0]:
+        q+="STATE_ID==%i ||" % i
+    q=q[:-3]
+    q+=") &&" 
+    return q
+    
 
 def spw_q(ms,
           spw):
