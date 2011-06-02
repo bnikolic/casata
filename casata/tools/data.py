@@ -4,6 +4,8 @@
 """
 Tools for extracting data from MS
 """
+import re
+
 import numpy
 
 import casata
@@ -76,10 +78,11 @@ def scan_intent_q(ms, si):
     """
     Query on scan intent
     """
+    r=re.compile(si)
     tb=ctools.get("tb")
     tb.open(ms+"/STATE")
     s=tb.getcol("OBS_MODE")
-    m=(s==si).nonzero()
+    m=numpy.array([r.match(x) for x in s]).nonzero()
     q="("
     for i in m[0]:
         q+="STATE_ID==%i ||" % i
