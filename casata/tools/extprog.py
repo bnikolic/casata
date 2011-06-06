@@ -6,7 +6,7 @@
 Convenient bindings in Python to external program with the standard
 option syntax
 """
-
+import sys
 import subprocess
 
 def call(progname,
@@ -35,7 +35,6 @@ def call(progname,
     if r != 0:
         print "Warning: external program returned error status -- inspect the output"
     return r
-
 
 def wvrgcal(*args,
             **kwargs):
