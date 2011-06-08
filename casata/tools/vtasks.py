@@ -15,6 +15,7 @@ from importvla import importvla
 from viewer import viewer
 from listobs import listobs
 from plotms import plotms
+from plotants import plotants
 from flagmanager import flagmanager
 from flagdata import flagdata
 from blcal import blcal
