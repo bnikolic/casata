@@ -18,13 +18,15 @@ def single(msin,
            spw,
            a1, a2,
            field=None,
+           scan=None,
            dotime=True):
     t, d, dc=data.vis(msin, 
                       ["TIME", "DATA", "CORRECTED_DATA"], 
                       spw=spw, 
                       a1=a1, 
                       a2=a2,
-                      field=field)
+                      field=field,
+                      scan=scan)
     phu=numpy.degrees(numpy.arctan2(d[0,0].imag, d[0,0].real))
     phc=numpy.degrees(numpy.arctan2(dc[0,0].imag, dc[0,0].real))
     pylab.clf()
@@ -35,6 +37,7 @@ def single(msin,
     pylab.scatter(t, phu, color="b", s=10)
     pylab.scatter(t, phc, color="r", s=8) 
     fnameout="o/phase-simple-%s.png" % utils.dataselname(msin, spw=spw, a1=a1, 
-                                                         a2=a2, field=field)
+                                                         a2=a2, field=field,
+                                                         scan=scan)
     pylab.savefig(fnameout)
     return fnameout
