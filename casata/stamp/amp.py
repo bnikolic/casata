@@ -2,8 +2,9 @@
 #
 # This file is part of casata and is licensed under GPL version 2
 """
-Quick plots of phases
+Quick plots of amplitudes
 """
+
 import  os
 import numpy
 
@@ -20,13 +21,14 @@ def single(msin,
            field=None,
            dotime=True):
     t, d, dc=data.vis(msin, 
-                      ["TIME", "DATA", "CORRECTED_DATA"], 
+                      #["TIME", "DATA", "CORRECTED_DATA"], 
+                      ["TIME", "DATA", "DATA"], 
                       spw=spw, 
                       a1=a1, 
                       a2=a2,
                       field=field)
-    phu=numpy.degrees(numpy.arctan2(d[0,0].imag, d[0,0].real))
-    phc=numpy.degrees(numpy.arctan2(dc[0,0].imag, dc[0,0].real))
+    phu=numpy.abs(d[0,0])
+    phc=numpy.abs(dc[0,0])
     pylab.clf()
     if dotime:
         t=t-t[0]
@@ -34,7 +36,7 @@ def single(msin,
         t=numpy.arange(0, len(t))
     pylab.scatter(t, phu, color="b", s=10)
     pylab.scatter(t, phc, color="r", s=8) 
-    fnameout="o/phase-simple-%s.png" % utils.dataselname(msin, spw=spw, a1=a1, 
-                                                         a2=a2, field=field)
+    fnameout="o/amp-simple-%s.png" % utils.dataselname(msin, spw=spw, a1=a1, 
+                                                       a2=a2, field=field)
     pylab.savefig(fnameout)
     return fnameout
