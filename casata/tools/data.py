@@ -244,13 +244,23 @@ def nfields(msin):
     s=tb.getcol("NAME")
     return len(s)
 
+def fields(msin, 
+           cols,
+           **kwargs):
+    """
+    Get arbitary information from the FIELD subtable
+    """
+    tb=ctools.get("tb")
+    tb.open(msin+"/FIELD")
+    return [tb.getcol(x) for x in cols]
+
 
 
 def gFieldData(msin,
                col,
                tab=None):
     """
-    Get the data from the Field sub-table
+    Get the data from a field table associated from another table 
     """
     tb=ctools.get("tb")
     if tab is None:
