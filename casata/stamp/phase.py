@@ -39,7 +39,7 @@ def single(msin,
     if dotime:
         t=t-t[0]
     else:
-        t=numpy.array(enumerate(t))
+        t=numpy.arange(0, len(t))
     pylab.scatter(t, phu, color="b", s=10)
     pylab.scatter(t, phc, color="r", s=8) 
     fnameout="o/phase-simple-%s.png" % dataselname(msin, spw=spw, a1=a1, 
