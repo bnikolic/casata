@@ -12,12 +12,20 @@ import pylab
 import casata
 from casata.tools import data,  vtasks
 
+def dataselname(msin,
+                **kwargs):
+    pref,junk=os.path.splitext(os.path.basename(msin))
+    res=pref
+    for k in kwargs.keys():
+        if kwargs[k] != None:
+            res+="%s-%s-" % (k, str(kwargs[k]))
+    return res
+
 
 def single(msin, 
            spw,
            a1, a2,
            field=None):
-    pref,junk=os.path.splitext(os.path.basename(msin))
     t, d, dc=data.vis(msin, 
                       ["TIME", "DATA", "CORRECTED_DATA"], 
                       spw=spw, 
@@ -30,6 +38,7 @@ def single(msin,
     t=t-t[0]
     pylab.scatter(t, phu)
     pylab.scatter(t, phc) 
-    fnameout="o/phase-simple-%s-%s-%s.png" % (pref, a1, a2)
+    fnameout="o/phase-simple-%s.png" % dataselname(msin, spw=spw, a1=a1, 
+                                                   a2=a2, field=field)
     pylab.savefig(fnameout)
     return fnameout
