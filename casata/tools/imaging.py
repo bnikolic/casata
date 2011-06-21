@@ -15,6 +15,7 @@ def imageName(msin,
               field,
               algo="hogbom",
               spw=None,
+              fpref=None,
               **kwargs):
     """
     Aut-generated names for images
@@ -25,6 +26,8 @@ def imageName(msin,
         pref+=(".S"+str(spw))
     if algo in ["dirty"]:
         pref+=("."+algo)
+    if fpref != None:
+        pref=os.path.join(fpref, pref)
     return pref
 
 
@@ -48,7 +51,8 @@ def dirty(msin,
           field,
           spw,
           npix=512,
-          cell=1.0
+          cell=1.0,
+          **kwargs
           ):
     """
     Make the dirty image
@@ -70,7 +74,8 @@ def dirty(msin,
     fnameout=imageName(msin, 
                        field=field,
                        spw=spw,
-                       algo="dirty")
+                       algo="dirty",
+                       **kwargs)
     im.makeimage(type='corrected',
                  image=fnameout)
     return fnameout
@@ -86,7 +91,8 @@ def cleanTest(msin,
               gain=0.1,
               boxmask=None,
               centmask=None,
-              mask=""
+              mask="",
+              **kwargs
               ):
     """
     A test of rework of the clean algorithm
@@ -97,7 +103,8 @@ def cleanTest(msin,
     """
     imagename=imageName(msin, 
                         field=field,
-                        spw=spw)
+                        spw=spw,
+                        **kwargs)
     im=ctools.get("im")
     qa=ctools.get("qa")
     files.rmClean(imagename)
