@@ -31,3 +31,4 @@ from gencal import gencal
 from plotxy import plotxy
 from clearstat import clearstat
 from imstat import imstat
+from imfit import imfit
