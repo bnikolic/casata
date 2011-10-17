@@ -1,3 +1,10 @@
+# Sarah Graves <s.graves@mrao.cam.ac.uk>
+# Initial version October 2011
+
+""" 
+A program for calling wvrgcal from within casapy (or python).
+"""
+
 import subprocess
 import numpy as np
 import casata.tools
@@ -5,15 +12,17 @@ from casata.tools import extprog
 import sys
 import inspect
 
+
+
 try:
     from taskinit import casalog
     casa_env=True
 except ImportError:
-    print 'not in a casa aware environment'
+    print 'Not in a casa aware environment, cannot use casalog.'
     casa_env=None
     pass
     
-""" a program for calling wvrgcal from within python or casapy"""
+
 
 
 class wvrgcal(object):
@@ -25,13 +34,13 @@ class wvrgcal(object):
     through wvrgcal.call(**kwargs).
 
     Example usage:
-    >>>from calling_wvrgcal import wvrgcal
-    >>>#first initialise the setup
-    >>>mywvrgcal=wvrgcal('/home/sfg30/softwvr/bin/wvrgcal', usecasalog=True)
-    >>>mywvrgcal.call(ms='MyMeasurementset.ms', output='MyOutputTable.W')
+    >>> from calling_wvrgcal import wvrgcal
+    >>> #first initialise the setup
+    >>> mywvrgcal=wvrgcal('/home/sfg30/softwvr/bin/wvrgcal', usecasalog=True)
+    >>> mywvrgcal.call(ms='MyMeasurementset.ms', output='MyOutputTable.W')
 
     The commandline options can be accessed by running:
-    >>>mywvrgcal.call(help=True) 
+    >>> mywvrgcal.call(help=True) 
 
     This will print the optional parameters to screen, unfortunately in
     the GNU format. When calling from this setup, these must be used
@@ -40,10 +49,10 @@ class wvrgcal(object):
     To use keyword options that do not take a value, set the value to be true.
 
     i.e., to run wvrgcal --help, use:
-    >>>mywvrgcal.call(help=True)
+    >>> mywvrgcal.call(help=True)
 
     The version number can be accessed as:
-    >>>mywvrgcal.version
+    >>> mywvrgcal.version
     """
 
     def __init__(self, path=None, usecasalog=True):
@@ -65,17 +74,17 @@ class wvrgcal(object):
              register errors there. 
 
         example usage:
-        >>>from calling_wvrgcal import wvrgcal
-        >>>mywvrgcal=wvrgcal(path='/path/to/bin/wvrgcal', usecasalog=True)
-        >>>mywvrgcal.call(ms='MyMeasurementSet.ms', output='MyOutput.W')
+        >>> from calling_wvrgcal import wvrgcal
+        >>> mywvrgcal=wvrgcal(path='/path/to/bin/wvrgcal', usecasalog=True)
+        >>> mywvrgcal.call(ms='MyMeasurementSet.ms', output='MyOutput.W')
         
         The version number of the chosen wvrgcal binary is written to
         screen, and can be accessed as:
-        >>>mywvrgcal.version
+        >>> mywvrgcal.version
 
         and the help message listing the available options for this
         version can be printed to screen via:
-        >>>mywvrgcal.call(help=True)
+        >>> mywvrgcal.call(help=True)
         
         """
         if usecasalog is True and casa_env is True:
@@ -85,32 +94,40 @@ class wvrgcal(object):
         
         #get version
         if path is not None:
-            self.wvrgcal = path
+            self.wvrgcal=path
         else:
-            self.wvrgcal = 'wvrgcal'
-        #self.returncode=subprocess.call([self.wvrgcal, '--help'])
-        process=subprocess.Popen([self.wvrgcal, '--help'],shell=False, 
+            self.wvrgcal='wvrgcal'
+
+        process=subprocess.Popen([self.wvrgcal, '--help'], shell=False, 
                            stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         self.returncode=process.wait()
+
         if self.returncode == 0:
-            mystdin, mystderr = process.communicate()
+            mystdin, mystderr=process.communicate()
             if mystderr is not '':
                 print mystderr
+
             self.version=_get_wvrgcal_version(mystdin)
+
             print 'WVRGCAl Version: '+self.version
+
             if self.casalog:
                 casalog.origin('wvrgcal')
-                casalog.post(message='Initialised WVRGCAL version: '+self.version, 
+                casalog.post(message=
+                             'Initialised WVRGCAL version: '+self.version, 
                              origin='__init__', priority='info')
                 
         else:
-            mystdin, mystderr = process.communicate()
-            print mystderr
-            print 'could not run the following wvrgcal call: '+self.wvrgcal+' --help'
+            mystdin, mystderr=process.communicate()
+            print(mystderr)
+            print('could not run the following wvrgcal call: '
+                  +self.wvrgcal+' --help')
             print self.returncode
+
             if self.casalog:
                 casalog.origin('wvrgcal')
-                casalog.post(message='Could not initialise WVRGCAL!', priority='ERROR', origin='__init__')
+                casalog.post(message='Could not initialise WVRGCAL!', 
+                             priority='ERROR', origin='__init__')
                 casalog.post(message='system call was: '+self.wvrgcal+' --help',
                              priority='ERROR', origin='__init__')
             raise Exception
@@ -122,22 +139,24 @@ class wvrgcal(object):
         output of stdout, followed by stderr, to screen
 
         e.g.:
-        >>>mywvrgcal.call( ms='MyMeasurementSet.ms', output='MyOutput.W')
+        >>> mywvrgcal.call( ms='MyMeasurementSet.ms', output='MyOutput.W')
         
         To see a full listing of available options for this version of
         wvrgcal (unfortunately in GNU format rather than python
         keyword format), please run: 
         
-        >>>mywvrgcal.call( help=True)
+        >>> mywvrgcal.call( help=True)
         """
+
         ## section of code from casata/tools/extrprog/wvrgcal
         if len(args) > 0:
             kwargs["ms"]=args[0]
-        if len(args)>1:
+        if len(args) > 1:
             kwargs["output"]=args[1]
         if len(args) > 2:
             raise "This program can only understand 2 positional parameters"
-        ### end of code cpied from there
+        ### end of code copied from casata/tools/extprog/wvrgcal
+
         if self.casalog:
             casalog.origin('wvrgcal')
             casalog.post(message='####################################',
@@ -147,6 +166,7 @@ class wvrgcal(object):
             casalog.post(message='      wvrgcal version: '+self.version, 
                          origin='call', priority='1')
             message='      wvrgcal call is: '+self.wvrgcal
+
             for key, val in kwargs.items():
                 keystr=' --'+str(key)
                 if val is not True:
@@ -159,12 +179,11 @@ class wvrgcal(object):
                 message+=keystr+valstr
             casalog.post(message=message, origin='call', priority='INFO')
 
-        #run wvrgcal using casata extprog
+        # run wvrgcal using casata.tools.extprog.call
         self.returncode=casata.tools.extprog.call(
-            *self.wvrgcal.split(),
-             **kwargs)
+            *self.wvrgcal.split(), **kwargs)
         
-        ## write to log
+        # write to the casalog
         if self.returncode != 0:
             if self.casalog:
                 casalog.origin('wvrgcal')
@@ -177,7 +196,8 @@ class wvrgcal(object):
 
             print 'could not run following wvrgcal call: '+self.wvrgcal,kwargs
             print self.returncode
-            raise StandardError,'Please check the wvrgcal options or the wvrgcal binary'
+            raise OSError(
+                'Please check the wvrgcal options or the wvrgcal binary')
 
         else:
             if self.casalog:
@@ -186,17 +206,24 @@ class wvrgcal(object):
             
 
 def _get_wvrgcal_version(helpstring):
-    """gets the version number  (as string) of the wvrgcal being run,
-    Takes in the result of wvrgcal --help"""
+    """Gets the version number (as string) of the wvrgcal being run.
+    
+    Takes in the result of 'wvrgcal --help' as its only argument.  
+
+    Note that the method used here to find the version number could
+    break if the format of the output from 'wvrgcal --help' dramatically
+    changes."""
 
     #find the line beginning with WVRGCAL
     splithelp=helpstring.split('\n')
-    indices = [line.find('WVRGCAL') for line in splithelp]
-    index = np.where(np.asarray(indices) != -1)[0].item()
+    indices=[line.find('WVRGCAL') for line in splithelp]
+    index=np.where(np.asarray(indices) != -1)[0].item()
     theline=splithelp[index]
+
     #get version number as part after the word 'Version'
-    version = theline.split('Version')[1].strip()
+    version=theline.split('Version')[1].strip()
     
+    #return the version number
     return version
     
     
