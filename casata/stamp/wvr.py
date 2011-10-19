@@ -23,7 +23,7 @@ def WVRSPW(msin):
             return spw
     
 
-def plot(msin, dotime=True,
+def plot(msin, dotime=True, ch=[0,1,2,3],
          **selkw):
     """
     Plot WVR data
@@ -36,8 +36,8 @@ def plot(msin, dotime=True,
         t=numpy.arange(0, 
                        len(t))
     for i in range(d.shape[0]):
-        for j in range(d.shape.[1]):
-            pylab.scatter(t, d[i,j])
+        for j in ch:
+            pylab.scatter(t, d[i,j].real, s=2)
     fnameout="o/wvr-%s.png" % utils.dataselname(msin, **selkw)
     pylab.savefig(fnameout)
     return fnameout
