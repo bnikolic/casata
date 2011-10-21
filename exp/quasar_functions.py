@@ -256,54 +256,81 @@ def flagging_spw_ends(spw_chandict, method='percent', flagrange=10):
 
 #TODO: BEST WAY TO THINK about plots? -- what types of plots are
 # needed in general, rather than at what stage of data processing?
-# def corrected_plots(vis): """ Make plots of the corrected data
 
-#     plots of:
+#runs, produces plots with data, need to check if these are the most
+#useful plots we could be creating.
+def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot, figext='png',avgtime='1e8',
+                    interactive=False): 
 
-#     amplitude vs time, per spw and per correlation (color the fields)
+    """ Make plots of the corrected data
 
-#     amplitude vs uvdist, per field and per correlation(color the spws)
+    *vis*: The visibility data set
+    *spws*: the science spws
+
+    *correlations*: which correlations to examine, either a single
+     string or a list of strings
+
+    *plotroot*: the root name of the plots
+     
     
-#     """
-#     print '---- MAKING PLOTS OF CORRECTED DATA ----'
+    plots of:
+
+    amplitude vs time, per spw and per correlation (color the fields)
+
+    amplitude vs uvdist, per field and per correlation (color the spws)
+
+    WARNING: this uses plotms, and at the moment (October 2011) this
+    will not work without opening a gui -- therefore these commands
+    willl not succeed if there is no X11 session. This will be true
+    regardless of what the keyword *interactive* is set to
+    
+    """
+    print '---- MAKING PLOTS OF CORRECTED DATA ----'
+
+
+    plotms_kwargs=dict(
+        vis = vis,
+        xaxis = 'time',
+        yaxis = 'amp',
+        ydatacolumn = 'corrected',
+        coloraxis = 'field',
+        interactive = interactive,
+        format=figext)
+
+    plotms_kwargs['avgchannel']=string_creator(spw_chandict.values())
+    plotname=plotroot+'_'+plotms_kwargs['xaxis']+'_vs_'+plotms_kwargs['yaxis']
+    #amplitude vs time, per spw and per correlation
+    for correlation in correlations:
+        plotms_kwargs['correlation']=correlation
+        for spw in spw_chandict.keys():
+            plotms_kwargs['spw']=str(spw)
+            plotms_kwargs['plotfile']=plotname+'_spw'+str(spw)+'_'+correlation+'.'+figext
+            plotms(**plotms_kwargs)
+
+            print '....'+plotms_kwargs['plotfile']
+
+    #amplitude vs uvdist, one field per plot, colors spw
+    plotms_kwargs['xaxis']='uvdist'
+    plotms_kwargs['avgtime']=avgtime
+    plotname=plotroot+'_'+plotms_kwargs['xaxis']+'_vs_'+plotms_kwargs['yaxis']
+    #TODO: does this work if they have
+
+    plotms_kwargs['coloraxis']='spw'
+    plotms_kwargs['spw']=''
+    for correlation in correlations:
+        plotms_kwargs['correlation']=correlation
+        for field in field_dict.values():
+            plotms_kwargs['field']=field
+            plotms_kwargs['plotfile']=plotname+'_f_'+field+'_'+correlation+'.'+figext
+            plotms(**plotms_kwargs)
+            print '....'+plotms_kwargs['plotfile']
+
+
 
     
-#     plotms_kwargs=dict(
-#         vis = split1,
-#         xaxis = 'time',
-#         yaxis = 'amp',
-#         ydatacolumn = 'corrected',
-#         coloraxis = 'field')
-
-#     #amplitude vs time, per spw and per correlation
-#     for correlation in ['XX','YY']:
-#         plotms_kwargs['correlation']=correlation
-#         for spw in spws:
-#             plotms_kwargs['spw']=str(spw)
-#             plotms_kwargs['plotfile']=corrdata_plot+'_spw'+str(spw)+'_'+correlation+figext
-#             plotms(**plotms_kwargs)
-
-#     #amplitude vs uvdist, one field per plot, colors spw
-#     plotms_kwargs['xaxis']='uvdist'
-#     plotms_kwargs['avgtime']='1e8'
-    
-#     #TODO: does this work if they ahve
-#     #plotsms has no keyword avgchan...
-#     #plotms_kwargs['avgchan']=np.mean(spw_chandict.values())
-#     plotms_kwargs['coloraxis']='spw'
-#     for correlation in ['XX','YY']:
-#         for field in field_dict.values():
-#             plotms_kwargs['field']=field
-#             plotms_kwargs['plotfile']=corrdata_uvplot+field+'_'+correlation+figext
-#             plotms(**plotms_kwargs)
 
 
-
-    
-    
-
-
-
+#works.
 def make_box_and_mask(im_size, mask_dx, mask_dy=None):
     """
     Create the box string for stats images, and the mask vertices
@@ -319,6 +346,9 @@ def make_box_and_mask(im_size, mask_dx, mask_dy=None):
     returns box, mask
 
     """
+
+    if not mask_dy:
+        mask_dy=mask_dx
     box = str(20)+','+str(int(im_size*0.625))+','+str(im_size-20)+','+str(im_size-20)
     x1 = im_size/2 - mask_dx/2
     x2 = im_size/2 + mask_dx/2
@@ -352,6 +382,7 @@ def clean_data(vis, pixsize, im_size, n_iter, field_dict,
     return imagenames
 
 
+#checked, it seems to work
 def create_fits_images(imagenames):
 
     """
@@ -371,6 +402,8 @@ def create_fits_images(imagenames):
         fitslist.append(fitsimage)
     return fitslist
 
+
+#checked that this works, not checked the detailed results.
 def stats_images(imagenames, bx,logfile=None):
     """
     Function to calculate the statistics on the images.
