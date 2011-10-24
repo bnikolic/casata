@@ -10,16 +10,19 @@ import numpy
 import pylab
 
 import casata
-from casata.tools import data,  vtasks
+from casata.tools import data,  vtasks, unwrap
 
 import utils
 
-def single(msin, 
-           spw,
-           a1, a2,
-           field=None,
-           scan=None,
-           dotime=True):
+def getp(msin, spw, 
+         spw,
+         a1, a2,
+         field=None,
+         scan=None,
+         dounwrap=True):
+    """
+    Get phase for original and corrected visibilities
+    """
     t, d, dc=data.vis(msin, 
                       ["TIME", "DATA", "CORRECTED_DATA"], 
                       spw=spw, 
@@ -29,6 +32,19 @@ def single(msin,
                       scan=scan)
     phu=numpy.degrees(numpy.arctan2(d[0,0].imag, d[0,0].real))
     phc=numpy.degrees(numpy.arctan2(dc[0,0].imag, dc[0,0].real))
+    if dounwrap:
+        phu=unwrap.phase(phu, 180)
+        phc=unwrap.phase(phc, 180)
+    return t, phu, phc
+    
+def single(msin, 
+           spw,
+           a1, a2,
+           field=None,
+           scan=None,
+           dotime=True):
+    t, phu, phc=getp(msin, spw, a1, a2, field=field,
+                     scan=scan, unwrap=False)
     pylab.clf()
     if dotime:
         t=t-t[0]
