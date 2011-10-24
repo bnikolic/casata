@@ -26,13 +26,15 @@ def wvrskydip(msin,
         aname=data.antname(msin, i)
         for j in range(4):
             fout.write("%s-ch%i, " % (aname, i) )
-    
+    fout.write("\n")    
+
     for k in range(len(t)):
         fout.write("%g, %g, %g, " % (t[k], az[k], el[k]))
         for i in range(nant):
             aname=data.antname(msin, i)
             for j in range(4):
                 fout.write("%g" % res[dname][0,j,k] )
+        fout.write("\n")
     fout.close()
 
                        
