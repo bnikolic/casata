@@ -18,7 +18,7 @@ def wvrskydip(msin,
     for i in range(nant):
         dname=data.antname(msin, i)
         d=data.vis(msin, ["DATA"], spw=0, a1=i, a2=i)
-        res[dname]=d
+        res[dname]=d[0]
 
     fout=open(fnameout, "w")
     fout.write("Time, Azimuth, Elevation, ")
