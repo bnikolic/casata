@@ -19,6 +19,7 @@ def getp(msin, spw,
          a1, a2,
          field=None,
          scan=None,
+         pol=0,
          dounwrap=True):
     """
     Get phase for original and corrected visibilities
@@ -30,8 +31,8 @@ def getp(msin, spw,
                       a2=a2,
                       field=field,
                       scan=scan)
-    phu=numpy.degrees(numpy.arctan2(d[0,0].imag, d[0,0].real))
-    phc=numpy.degrees(numpy.arctan2(dc[0,0].imag, dc[0,0].real))
+    phu=numpy.degrees(numpy.arctan2(d[pol,0].imag, d[pol,0].real))
+    phc=numpy.degrees(numpy.arctan2(dc[pol,0].imag, dc[pol,0].real))
     if dounwrap:
         phu=unwrap.phase(phu, 180)
         phc=unwrap.phase(phc, 180)
@@ -42,8 +43,9 @@ def single(msin,
            a1, a2,
            field=None,
            scan=None,
+           pol=0,
            dotime=True):
-    t, phu, phc=getp(msin, spw, a1, a2, field=field,
+    t, phu, phc=getp(msin, spw, a1, a2, field=field, pol=pol,
                      scan=scan, unwrap=False)
     pylab.clf()
     if dotime:
