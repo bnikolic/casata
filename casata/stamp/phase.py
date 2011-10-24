@@ -14,7 +14,7 @@ from casata.tools import data,  vtasks, unwrap
 
 import utils
 
-def getp(msin, spw, 
+def getp(msin, 
          spw,
          a1, a2,
          field=None,
