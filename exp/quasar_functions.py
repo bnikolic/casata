@@ -1,7 +1,11 @@
 #written by Sarah Graves, October 2011
 
-from taskinit import *
 import numpy as np
+
+#get casa tasks and tools from casata
+import casata.tools.ctools
+from casata.tools.vtasks import *
+
 
 
 _script_log_level=1
@@ -65,6 +69,7 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     """
 
     #open the measurement set
+    ms=casata.tools.ctools.get("ms")
     ms.open(myvis)
 
     #get the values that are constant for all spws (antenna names,
@@ -133,6 +138,7 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
 
 
     #get (physical) baselines
+    tb=casata.tools.ctools.get("tb")
     tb.open(myvis+'/ANTENNA')
     positions=tb.getcol('POSITION')
     names=tb.getcol('NAME')
@@ -156,6 +162,11 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
 radians_in_arcseconds=206264.806
 
 def get_baseline(pos1, pos2):
+
+    """
+    Return the distance between two positions, *pos1* and *pos2*
+
+    """
     return np.sqrt(np.sum((pos1-pos2)**2))
 
 
@@ -259,18 +270,23 @@ def flagging_spw_ends(spw_chandict, method='percent', flagrange=10):
 
 #runs, produces plots with data, need to check if these are the most
 #useful plots we could be creating.
-def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot, figext='png',avgtime='1e8',
-                    interactive=False): 
+def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot, 
+                    figext='png',avgtime='1e8',
+                    interactive=False, overwrite=True): 
 
     """ Make plots of the corrected data
 
     *vis*: The visibility data set
-    *spws*: the science spws
-
+    *spw_chandict*: the science spws and number of channels
+    *field_dict*: the dictionary of field names
     *correlations*: which correlations to examine, either a single
      string or a list of strings
-
     *plotroot*: the root name of the plots
+
+    *figext*: type of figure, e.g. 'png' or 'pdf'
+    *avgtime*: time to average over in some plots
+    *interactive*: do you want to interact with the plot?
+    *overwrite*: do you want to overwrite existing plots of the same name?
      
     
     plots of:
@@ -295,7 +311,8 @@ def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot, figex
         ydatacolumn = 'corrected',
         coloraxis = 'field',
         interactive = interactive,
-        format=figext)
+        format=figext,
+        overwrite=overwrite)
 
     plotms_kwargs['avgchannel']=string_creator(spw_chandict.values())
     plotname=plotroot+'_'+plotms_kwargs['xaxis']+'_vs_'+plotms_kwargs['yaxis']
@@ -305,6 +322,7 @@ def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot, figex
         for spw in spw_chandict.keys():
             plotms_kwargs['spw']=str(spw)
             plotms_kwargs['plotfile']=plotname+'_spw'+str(spw)+'_'+correlation+'.'+figext
+            plotms_kwargs['title']='Amp vs. Time\n'+str(vis)+'\nSPW: '+str(spw)+' Corr: '+correlation
             plotms(**plotms_kwargs)
 
             print '....'+plotms_kwargs['plotfile']
@@ -322,6 +340,7 @@ def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot, figex
         for field in field_dict.values():
             plotms_kwargs['field']=field
             plotms_kwargs['plotfile']=plotname+'_f_'+field+'_'+correlation+'.'+figext
+            plotms_kwargs['title']='Amp vs. UVdist\n'+str(vis)+'\nfield: '+field+' Corr: '+correlation
             plotms(**plotms_kwargs)
             print '....'+plotms_kwargs['plotfile']
 
@@ -449,6 +468,7 @@ def stats_images(imagenames, bx,logfile=None):
             myfile.write(stats_string+'\n')
     if logfile:
         myfile.close()
+
 
 def imfit_images(imagenames, mask, logfile=None):
     """

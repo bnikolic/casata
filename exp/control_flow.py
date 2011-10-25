@@ -1,9 +1,4 @@
 
-def get_quasar_info(vis, **kwargs):
-    #needs to return the fields, spws, channels, baslines (or at least
-    #the longest basleines?), antenna?
-
-
 
 def quasar_reduction(vis, *args, **kwargs, user_flagging_script=None,
                    control='complete'):
