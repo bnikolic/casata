@@ -1,7 +1,7 @@
 #written by Sarah Graves, October 2011
 
 import numpy as np
-
+import os
 #get casa tasks and tools from casata
 import casata.tools.ctools
 from casata.tools.vtasks import *
@@ -204,7 +204,7 @@ def  antenna_position_correct(vis, antenna_position_corrections, antpos_caltable
     #return the name of the position table
     return antpos_caltable
 
-def call_wvrgcal(vis, wvrgcal_table, wvrgcal, field_dict, cal_field, antennas
+def call_wvrgcal(vis, wvrgcal_table, wvrgcal, field_dict, cal_field, antennas,
                  **wvrgcal_options
                  ):
     """
@@ -301,12 +301,34 @@ def apriori_flagging(vis, quackinterval=1.5, quackincrement=True):
              quackinterval=quackinterval,
              quackincrement=True)
 
-    #back up data after apriori flagging
-    #TODO: remove this backup?
-    #flagmanager(vis=vis, mode='save', versionname='apriori',
-    #x            comment = 'After, autocorr, shadow, and quack.')
 
-def flagging_spw_ends(spw_chandict, method='percent', flagrange=10):
+
+def flagging_spw_ends(vis, spw_chandict, band, logging=None):
+    """
+    Perform flagging of the beginning and end channels of the spw,
+    dependent on the Band of the spws.
+
+    TODO:CURRENTLY HARDCODED, NEED TO DECIDE ON APPROPRIATE METHOD!
+    URGENT!
+    
+    """
+
+    if int(band) == 6:
+        spw_chans =['*:0~5','*:62~63']
+    
+    elif int(band) == 9 and spw_chandict.keys()==[0,1,2,3]:
+        spw_chans = ['0:0~7', '1:0~11', '2:0~19', '3:0~13;59~60;63']
+
+    flagdata(vis=vis, flagbackup=False, spw=spw_chans)
+    
+    if logging:
+        logging.write('Flagging beginning and end spw channels\n')
+        logging.write('Channel string: '+str(spw_chans)+'\n')
+
+
+
+
+def flagging_spw_ends_flagstringcreator(spw_chandict, method='percent', flagrange=10):
 
     """
     Create spw flagging string for ending to flagdata.
@@ -340,8 +362,171 @@ def flagging_spw_ends(spw_chandict, method='percent', flagrange=10):
     
     return spw_flagging
 
+def initial_plots(vis, spws, correlations, root_name, 
+                  overwrite=True, interactive=False, figext='png', logging=None):
+    """
+    Produce plot of amp versus channel for each SPW provided.
+
+    All fields are shown on same plot, and the correlations are
+    written in different colours
+
+    Return list of plots produced
+
+    """
+    correlations=string_creator(correlations)
+    plot_kwargs=dict( vis=vis, xaxis='channel', yaxis='amp', field='',
+                          avgtime='1e8', correlation='XX,YY', coloraxis='corr',
+                          overwrite=overwrite)
+
+    output_plots=[]
+    fig_file_root=root_name+'00_initial_amp_vs_chan_spw'
+    for spw in spws:
+        filename=fig_file_root+str(spw)+'.'+figext
+        plot_kwargs['plotfile']=filename
+        plot_kwargs['spw']=str(spw)
+        plotms(**plot_kwargs)
+        output_plots.append(filename)
+
+    if logging:
+        logging.plots_created(output_plots)
+    return output_plots
 
 
+def spw_channel_marking_fraction(spw_chandict, begin_frac, end_frac):
+    """
+    Create string selecting channels from beginning fraction to
+    end_fraction (inclusive).
+
+    Return string that will select those channel in casa tasks
+
+    """
+
+    spw_chanstring=[]
+    for spw in spw_chandict:
+        n_chans=spw_chandict[spw]
+        spw_chanstring.append(str(spw)+':'
+                              +str(int(round(n_chans/begin_frac)))
+                              +'~'
+                              +str(int(round(n_chans/end_frac)))
+                              )
+    return string_creator(spw_chanstring)
+
+def bpp_calibration(vis, bpp_caltable, spw_chandict,
+                     cal_field_name, ref_ant, 
+                     minsnr=2.0, minblperant=4, solint='inf',
+                     begin_frac=3, end_frac=2):
+    """
+    calibrate the phases of the bandpass calibrator.
+
+    """
+                     
+    print '------ calibrate phases for bandpass calibrator----'
+    
+    
+    spw_chanstring=spw_channel_marking_fraction(spw_chandict, begin_frac, 
+                                                end_frac)
+    
+    gaincal(vis=vis, caltable=bpp_caltable, field=cal_field_name,
+            refant=ref_ant, calmode='p', spw=spw_chanstring,
+            minsnr=minsnr, minblperant=minblperant,
+            solint=solint)
+
+    return bpp_caltable
+            
+
+def caltable_plot(caltable,spw_chandict, figroot, phase=None, amp=None, snr=None, 
+                  interactive=False,
+                  figext='png', correlations=['XX','YY']):
+    """
+    Plots of caltable
+
+    """
+    print '----plotting '+caltable
+
+    plot_file_root=figroot+os.path.splitext(caltable)[0]
+    plot_kwargs=dict( caltable=caltable, xaxis='time', iteration='antenna', 
+                      showgui=interactive, subplot=441)
+    plotfiles=[]
+
+    if phase:
+        print '-----plotting phase vs time'
+        plot_kwargs['yaxis']='phase'
+        plot_kwargs['plotrange']=[0,0,-180,180]
+        for spw in spw_chandict.keys():
+            plot_kwargs['spw']=str(spw)
+            plot_file=plot_file_root+'_phase_vs_time_spw'+str(spw)
+            for poln in correlations:
+                plot_kwargs['poln']=poln
+                plot_kwargs['figfile']=plot_file+'.'+poln+'.'+figext
+                plotcal(**plot_kwargs)
+                plotfiles.append(plot_kwargs['figfile'])
+
+    if amp:
+        print '-----plotting amp vs time'
+        plot_kwargs['yaxis']='amp'
+        plot_kwargs['plotrange']=[]
+        for spw in spw_chandict.keys():
+            plot_kwargs['spw']=str(spw)
+            plot_file=plot_file_root+'_amp_vs_time_spw'+str(spw)
+            for poln in correlations:
+                plot_kwargs['poln']=poln
+                plot_kwargs['figfile']=plot_file+'.'+poln+'.'+figext
+                plotcal(**plot_kwargs)
+                plotfiles.append(plot_kwargs['figfile'])
+
+    if snr:
+        print 'SNR PLOTTING NOT YET IMPLEMENTED'
+
+
+    if logging:
+        logging.plots_created(plotfiles)
+
+    return plotfiles
+            
+
+def bandpass_calibration(vis, unapplied_caltables, bp_caltable, cal_field_name,ref_ant,
+                         solint='inf', fillgaps=20, minblperant=4, solnorm=True,
+                         logging=None):
+
+    """perform bandpass calibration
+
+    """
+    print '----BANDPASS CALIBRATION----'
+    bandpass(vis=vis, caltable=bp_caltable,
+             gaintable=unapplied_caltables,
+             field=cal_field_name,
+             spw='', combine='', solint=solint, minblperant=minblperant, refant=ref_ant,
+             solnorm=solnorm)
+
+    if logging:
+        mylogging.write(' Performing band pass calibration\n')
+        #need to write the parametersinto this
+    return caltable
+
+def gain_calibration(vis,unapplied_caltables, gc_caltable, gc_amp_caltable, 
+                     cal_field_name, ref_ant,
+                     solint='inf',  minblperant=4, minsnr=2,
+                     logging=None):
+
+    """perform gain calibration
+    phase, then amp and phase
+
+    """
+    print '-----GAIN CALIBRATION----'
+    print '.... phase'
+    gaincal(vis=vis, field=cal_field_name, gaintable=unapplied_caltables, 
+            refant=ref_ant, calmode='p', minsnr=minsnr, minblperant=minblperant, 
+            solint=solint, caltable=gc_caltable)
+    unapplied_caltables2=unapplied_caltables[:].append(gc_caltable)
+
+    print '...amp and phase'
+    gaincal(vis=vis, field=cal_field_name, gaintable=unapplied_caltables, 
+            refant=ref_ant, calmode='ap', minsnr=minsnr, minblperant=minblperant,
+            solint=solint, caltable=gc_amp_caltable)
+    unapplied_caltables.append(gc_amp_caltable)
+    
+    return gc_caltable, gc_amp_caltable
+    
 #TODO: BEST WAY TO THINK about plots? -- what types of plots are
 # needed in general, rather than at what stage of data processing?
 

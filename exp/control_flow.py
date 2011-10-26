@@ -42,43 +42,53 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
          imaging=True
          stats=True
          user_flagging=user_flagging_script
-    if control=='initial':
+    
+    elif control=='initial':
         initial_calibrations=True
         calibration=None
         imaging=None
         stats=None
         user_flagging=user_flagging_script
-    if control=='final':
+    
+    elif control=='final':
         initial_calibrations=None
         calibration=True
         imaging=True
         stats=True
         user_flagging = user_flagging_script
-
-    if control=='imaging':
+    
+    elif control=='imaging':
         initial_calibrations=None
         calibration=None
         user_flagging=None
         imaging=True
         stats=True
-    if control=='stats':
+    
+    elif control=='stats':
         initial_calibrations=None
         calibration=None
         user_flagging=None
         imaging=None
         stats=True
+    
 
+    #wvrgcal setup; run if options are defined (or if wvrgcal_options
+    #set to True...)
     if wvrgcal_options:
         do_wvrgcal=True
 
     #always do: setup names, parameters and get basic info
     #get basic info from data set
+    #TODO: SEPARATE THIS INTO SEPARATE FUNCTIONS!
     antennas, field_dict, spw_chandict, spw_freqdict, band, max_baseline=get_quasar_info(vis, spws)
 
+    correlations=['XX','YY']
     
     #setup names and parameters -- leave it here rather than in
     #various functions so if we need to improve in future its easy to
     #do. 
+
+    #TODO: THINK ABOUT FILE NAMES
 
     #ms names
     root_name = os.path.split( os.path.splitext(vis)[0] )[1]
@@ -97,15 +107,6 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     #antenna position correction
     antpos_caltable = root_name+'antpos_fix' 
 
-
-    #flagging parameters
-    quackinterval=1.5
-    quackincrement=True
-    #TODO: flagging ends of array -- this WILL NEED TO BE BAND BASED? MAYBE
-    #NOT DEFINED HERE?
-    spwflagrange=10
-    spwflagmethod='percent'
-
     #plotting parameters
     figext='png'
 
@@ -121,48 +122,67 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
 
         #if wvrgcal chosen,
         if do_wvrgcal:
-            caltable_name=call_wvrgcal(wvrgcal_options)
+            
+            caltable_name, wvrversion = call_wvrgcal(vis, wvrgcal_table,
+                                                     wvrgcal, 
+                                                     field_dict, cal_field,
+                                                     antennas,
+                                                     **wvrgcal_options)
+            unapplied_caltable.append(caltable_name)
 
         #apply cal
         if unapplied_caltable:
-            applycal(**kwargs)
+            applycal(vis=vis, caltable=unapplied_caltable)
+            unapplied_caltable=[]
 
         #split out science spws (1,3,5 and 7? always?)
         #should be choice to script, to allow for quick-look, 
         #single spw reduction
         split(vis=vis, outputvis=split1, datacolumn='corrected', 
-              spw=string_creator(spws))
-
+              spw=string_creator(spws)
+              )
+        spw_chandict=post_split_spw_chandict
        
-        #apriori flagging
-        #should this include flagging beginning and end 10% of chans?
-        apriori_flagging(vis,)
+        #apriori  and beginning/end channel flagging
+        apriori_flagging(split1)
 
-        flagging_spw_ends(vis, spw_chandict)
+        flagging_spw_ends(split1, spw_chandict, band)
 
         #plots of data
-        initial_plots(myvis, **info_dict)
+        inital_plot_names=initial_plots(split1, spw_chandict.keys(), correlations)
 
-        
+    #ensure correct spws used even if not running whole thing
+    spw_chandict=post_split_spw_chandict
 
     #if requested, do user chosen flagging commands
     if user_flagging:
         execfile(user_flagging_script)
-        #plots after apriori and user flagging
+
+        #plots after apriori and user flagging???
         #after_apu_flagging_plots(myvis, **info_dict)
           
     if calibration:
         #correct phases of bandpass calibrator
-        #inf vs int...
-        unapplied_caltable=bcpp_calibration_and_plots(myvis, **caloptions_dict)
+        bpp_caltable=bpp_calibration(myvis, bpp_caltable, spw_chandict, 
+                                     field_dict[cal_field], ref_ant)
+        unapplied_caltables.append(bpp_caltable)
+        caltable_plot(bpp_caltable, spw_chandict, phase=True)
 
         #bandpass calibration
-        unapplied_caltable=bandpass_calibration(myvis, **bppoptions_dict)
-        bandpass_calibration_plots(*args)
+        bp_caltable=bandpass_calibration(myvis, unapplied_caltables, bp_caltable,
+                                         field_dict[cal_field], ref_ant)
+        unapplied_caltables.append(bp_caltable)
+        caltable_plot(bp_caltable, spw_chandict, phase=True, amp=True)
 
         #gain calibration
-        unapplied_caltable, unapplied_caltable_calfield=gain_calibration(*args, **kwargs)
-        gain_calibration_plots(*args)
+        gc_caltable, gc_amp_caltable =gain_calibration(myvis, unapplied_caltables, 
+                                             gc_caltable, gc_amp_caltable,
+                                             field_dict[cal_field],
+                                             ref_ant)
+        unapplied_caltables.append(gc_caltable)
+        unapplied_caltables.append(gc_amp_caltable)
+        caltable_plot(gc_caltable, spw_chandict, phase=True)
+        caltable_plot(gc_amp_caltable, spw_chandict, phase=True, amp=True)
 
         #apply calibrations, differently for cal_field and regular
         apply_the_calibrations(*args, **kwargs)
