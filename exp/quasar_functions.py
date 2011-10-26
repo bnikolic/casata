@@ -30,7 +30,7 @@ def showinfo(message, level):
 # or one channel? from corresponding real spectral windows.
 
 
-#TODO: use casata, prob should break up into separate functions
+#ODO: use casata, prob should break up into separate functions
 def get_vis_info(myvis, spws=[1,3,5,7]):
     """
     For a given visability and choice of science spws,
@@ -77,6 +77,8 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     antennas=ms.range(items='antennas')['antennas']
     fields=ms.range(items='fields')['fields']
     field_ids=ms.range(items='field_id')['field_id']
+
+    field_dict=dict( zip( field_ids, fields))
 
     nchans=[]
     rfreqs=[]
@@ -154,7 +156,7 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     #for moment, return only the max baseline?
     max_baseline=max(baselines)
 
-    return (antennas, fields, field_ids, 
+    return (antennas, field_dict, 
             spw_chandict,spw_freqdict, 
             band, max_baseline)
 
@@ -170,6 +172,81 @@ def get_baseline(pos1, pos2):
     return np.sqrt(np.sum((pos1-pos2)**2))
 
 
+def antpos_to_dict(ant_names, ant_corrs):
+    """
+    function to turn comma separated string of antenna names, and a
+    list of floats representing the antenna corrections to those
+    antenna's into a dictionary
+
+    """
+    
+    ant_names=ant_names.split(',')
+    ant_corr=np.asarray(ant_corr)
+    ant_corr=ant_corr.reshape([len(ant_corr)/3,3])
+    return dict( zip( ant_names, ant_corr))
+    
+
+def  antenna_position_correct(vis, antenna_position_corrections, antpos_caltable):
+    """
+    Read in dictionary of antenna positions, calculate caltable for vis,
+    and return the name of the caltable
+
+    """
+
+    #get names and corrections as lists
+    antenna_names=antenna_position_corrections.keys()
+    antenna_corrections=antenna_position_corrections.values()
+
+    #calculate the calibration table
+    gencal(vis=vis, caltable=antpos_caltable, caltype='antpos',
+           antenna=antenna_names, parameter=antenna_corrections)
+    
+    #return the name of the position table
+    return antpos_caltable
+
+def call_wvrgcal(vis, wvrgcal_table, wvrgcal, field_dict, cal_field, antennas
+                 **wvrgcal_options
+                 ):
+    """
+    Call a given wvrgcal binary with specified options.
+
+    vis: the name of the measurement set (string, representing an ms)
+
+    wvrgcal_table: name of caltable to be produced by wvrgcal
+
+    wvrgcal: string representing the wvrgcal_binary (if True, then
+    uses the first 'wvrgcal' found in system path)
+
+    wvrgcal_options: dictionary of keyword options passed to wvrgcal
+
+    """
+
+    #if no specific binary given, use the first one in the system path
+    if wvrgcal is True:
+        wvrgcal='wvrgcal'
+
+    #set up options used in the fields
+    if wvrgcal_options.has_key('tie_all'):
+        wvrgcal_options.pop('tie_all')
+        wvrgcal_options['tie']=string_creator(field_dict.values())
+            
+    if wvrgcal_options.has_key('stat_cal'):
+        wvrgcal_options.pop('stat_cal')
+        wvrgcal_options['statsource']=field_dict[cal_field]
+    
+    #flag antenna without wvr0? TV?
+    #TODDO
+
+    #set up wvrgcal
+    mywvrgcal = calling_wvrgcal.wvrgcal(wvrgcal)
+    
+    #call wvrgcal
+    mywvrgcal.call(ms=vis, output=wvrgcal_table, **wvrgcal_options)
+
+    #return the output caltable and the version number
+    return wvrgcal_table, mywvrgcal.version
+
+                 
 
 #based on freq
 #pixsize and im_size
@@ -226,8 +303,8 @@ def apriori_flagging(vis, quackinterval=1.5, quackincrement=True):
 
     #back up data after apriori flagging
     #TODO: remove this backup?
-    flagmanager(vis=vis, mode='save', versionname='apriori',
-                comment = 'After, autocorr, shadow, and quack.')
+    #flagmanager(vis=vis, mode='save', versionname='apriori',
+    #x            comment = 'After, autocorr, shadow, and quack.')
 
 def flagging_spw_ends(spw_chandict, method='percent', flagrange=10):
 
