@@ -87,7 +87,6 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     #setup names and parameters -- leave it here rather than in
     #various functions so if we need to improve in future its easy to
     #do. 
-
     #TODO: THINK ABOUT FILE NAMES
 
     #ms names
@@ -105,10 +104,22 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     wvrgcal_table=root_name+'_wvrgcal.W'
     
     #antenna position correction
-    antpos_caltable = root_name+'antpos_fix' 
+    antpos_caltable = root_name+'_antpos_fix' 
 
+    #caltable names
+    bpp_caltable=root_name+'_bpphase.gcal'
+    bp_caltable=root_name+'_bandpass.gcal'
+    gc_caltable=root_name+'_gainphase.gcal'
+    gc_amp_caltable=root_name+'_gainamp.gcal'
     #plotting parameters
     figext='png'
+
+
+    #imaging parameters
+    cleanmode='mfs'
+    cleanweighting='briggs'
+    cleanspw='' #NOTE THAT SPW HERE AND AFTER SPLIT HAVE DIFF NAMES
+
 
     #list of unapplied calibration tables
     unapplied_caltable=[]
@@ -153,7 +164,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
 
     #ensure correct spws used even if not running whole thing
     spw_chandict=post_split_spw_chandict
-
+    unapplied_caltables=[]
     #if requested, do user chosen flagging commands
     if user_flagging:
         execfile(user_flagging_script)
@@ -163,32 +174,34 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
           
     if calibration:
         #correct phases of bandpass calibrator
-        bpp_caltable=bpp_calibration(myvis, bpp_caltable, spw_chandict, 
+        bpp_caltable=bpp_calibration(split1, bpp_caltable, spw_chandict, 
                                      field_dict[cal_field], ref_ant)
         unapplied_caltables.append(bpp_caltable)
-        caltable_plot(bpp_caltable, spw_chandict, phase=True)
+        caltable_plot(bpp_caltable, spw_chandict, root_name,  phase=True)
 
         #bandpass calibration
-        bp_caltable=bandpass_calibration(myvis, unapplied_caltables, bp_caltable,
+        bp_caltable=bandpass_calibration(split1, unapplied_caltables, bp_caltable,
                                          field_dict[cal_field], ref_ant)
+        #reset unapplied caltables! DON'T WANT TO APPLY THE BPP CALTABLE AFTER THIS!
+        unapplied_caltables=[]
         unapplied_caltables.append(bp_caltable)
-        caltable_plot(bp_caltable, spw_chandict, phase=True, amp=True)
+        caltable_plot(bp_caltable, spw_chandict, root_name, phase=True, amp=True)
 
         #gain calibration
-        gc_caltable, gc_amp_caltable =gain_calibration(myvis, unapplied_caltables, 
+        gc_caltable, gc_amp_caltable =gain_calibration(split1, unapplied_caltables, 
                                              gc_caltable, gc_amp_caltable,
                                              field_dict[cal_field],
                                              ref_ant)
         unapplied_caltables.append(gc_caltable)
         unapplied_caltables.append(gc_amp_caltable)
-        caltable_plot(gc_caltable, spw_chandict, phase=True)
-        caltable_plot(gc_amp_caltable, spw_chandict, phase=True, amp=True)
+        caltable_plot(gc_caltable, spw_chandict, root_name, phase=True)
+        caltable_plot(gc_amp_caltable, spw_chandict, root_name, phase=True, amp=True)
 
-        #apply calibrations, differently for cal_field and regular
-        apply_the_calibrations(*args, **kwargs)
+        #apply calibrations, slightly differently for cal_field and regular
+        apply_calibrations_calsep(split1, unapplied_caltables, field_dict, cal_field)
 
         #plot corrected data
-        corrected_plots(*args)
+        corrected_plots(split1, spw_chandict, field_dict, correlations, )
 
         #split out corrected data, averaging all channels in each spw
         #No need to make a function wrapper to do this?

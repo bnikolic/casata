@@ -411,6 +411,21 @@ def spw_channel_marking_fraction(spw_chandict, begin_frac, end_frac):
                               )
     return string_creator(spw_chanstring)
 
+def get_post_split_spw_chandict(spw_chandict):
+    """
+    Get chandict representing chosen spws after splitting
+
+    """
+    spws=spw_chandict.keys()
+    post_split_spws=range(0, len(spws))
+    post_split_spw_chandict={}
+    for new,old in zip(post_split_spws, spws):
+        post_split_spw_chandict[new]=spw_chandict[old]
+    
+    return post_split_spw_chandict
+
+
+
 def bpp_calibration(vis, bpp_caltable, spw_chandict,
                      cal_field_name, ref_ant, 
                      minsnr=2.0, minblperant=4, solint='inf',
@@ -436,7 +451,8 @@ def bpp_calibration(vis, bpp_caltable, spw_chandict,
 
 def caltable_plot(caltable,spw_chandict, figroot, phase=None, amp=None, snr=None, 
                   interactive=False,
-                  figext='png', correlations=['XX','YY']):
+                  figext='png', correlations=['X','Y'],
+                  logging=None):
     """
     Plots of caltable
 
@@ -457,6 +473,7 @@ def caltable_plot(caltable,spw_chandict, figroot, phase=None, amp=None, snr=None
             plot_file=plot_file_root+'_phase_vs_time_spw'+str(spw)
             for poln in correlations:
                 plot_kwargs['poln']=poln
+                print poln
                 plot_kwargs['figfile']=plot_file+'.'+poln+'.'+figext
                 plotcal(**plot_kwargs)
                 plotfiles.append(plot_kwargs['figfile'])
@@ -501,7 +518,7 @@ def bandpass_calibration(vis, unapplied_caltables, bp_caltable, cal_field_name,r
     if logging:
         mylogging.write(' Performing band pass calibration\n')
         #need to write the parametersinto this
-    return caltable
+    return bp_caltable
 
 def gain_calibration(vis,unapplied_caltables, gc_caltable, gc_amp_caltable, 
                      cal_field_name, ref_ant,
@@ -526,6 +543,47 @@ def gain_calibration(vis,unapplied_caltables, gc_caltable, gc_amp_caltable,
     unapplied_caltables.append(gc_amp_caltable)
     
     return gc_caltable, gc_amp_caltable
+    
+
+def apply_calibrations_calsep(vis, caltables, field_dict, cal_field):
+
+    """
+    Apply the calibrations, using 'nearest' interpolation on the
+    calibration field, and 'linear' interpolation on the science fields.
+
+    TODO: ensure this works if only one source?
+    """
+
+    #should this be hardcoed?
+    #check if right?
+    cal_cal_interp=['nearest', 'nearest', 'nearest']
+    cal_sci_interp=['nearest', 'linear','linear']
+
+    #get name of calibration field
+    cal_field_name = field_dict[cal_field]
+
+    #get a list repeating the name of the calibration field for each gain table
+    gain_fields=[cal_field_name for i in caltables]
+
+    print '----Applying Calibrations:'
+    print '    '+str(caltables)
+    print '...applying to calibration field'
+    applycal(vis=vis, field=cal_field_name, interp=cal_cal_interp,
+             gaintable=caltables, gainfield=gain_fields,
+             flagbackup=False)
+
+    science_fields=field_dict.values()[:]
+    science_fields.remove(cal_field_name)
+
+    if science_fields:
+        
+        print '...applying to science fields'
+        field_list=string_creator(science_fields)
+        applycal(vis=vis, field=field_list,
+                 interp=cal_sci_interp,
+                 gaintable=caltables, gainfield=gain_fields,
+                 flagbackup=False)
+    
     
 #TODO: BEST WAY TO THINK about plots? -- what types of plots are
 # needed in general, rather than at what stage of data processing?
