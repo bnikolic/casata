@@ -521,7 +521,8 @@ def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
         xaxis = 'time',
         yaxis = 'amp',
         ydatacolumn = 'corrected',
-        coloraxis = 'field')
+        coloraxis = 'field',
+        avgchannel=string_creator(spw_chandict.values())
 
     #amplitude vs time, per spw and per correlation
     for correlation in ['XX','YY']:
@@ -538,8 +539,9 @@ def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
     #numbers of channels???
 
     #plotsms has no keyword avgchan...
-    #plotms_kwargs['avgchan']=np.mean(spw_chandict.values())
+
     plotms_kwargs['coloraxis']='spw'
+    plotms_kwargs['spw']=''
     for correlation in ['XX','YY']:
         for field in field_dict.values():
             plotms_kwargs['field']=field

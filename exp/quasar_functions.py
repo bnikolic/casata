@@ -1,7 +1,11 @@
 #written by Sarah Graves, October 2011
 
-from taskinit import *
 import numpy as np
+import os
+#get casa tasks and tools from casata
+import casata.tools.ctools
+from casata.tools.vtasks import *
+
 
 
 _script_log_level=1
@@ -26,7 +30,7 @@ def showinfo(message, level):
 # or one channel? from corresponding real spectral windows.
 
 
-#TODO: use casata, prob should break up into separate functions
+#ODO: use casata, prob should break up into separate functions
 def get_vis_info(myvis, spws=[1,3,5,7]):
     """
     For a given visability and choice of science spws,
@@ -65,6 +69,7 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     """
 
     #open the measurement set
+    ms=casata.tools.ctools.get("ms")
     ms.open(myvis)
 
     #get the values that are constant for all spws (antenna names,
@@ -72,6 +77,8 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     antennas=ms.range(items='antennas')['antennas']
     fields=ms.range(items='fields')['fields']
     field_ids=ms.range(items='field_id')['field_id']
+
+    field_dict=dict( zip( field_ids, fields))
 
     nchans=[]
     rfreqs=[]
@@ -133,6 +140,7 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
 
 
     #get (physical) baselines
+    tb=casata.tools.ctools.get("tb")
     tb.open(myvis+'/ANTENNA')
     positions=tb.getcol('POSITION')
     names=tb.getcol('NAME')
@@ -148,7 +156,7 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     #for moment, return only the max baseline?
     max_baseline=max(baselines)
 
-    return (antennas, fields, field_ids, 
+    return (antennas, field_dict, 
             spw_chandict,spw_freqdict, 
             band, max_baseline)
 
@@ -156,9 +164,89 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
 radians_in_arcseconds=206264.806
 
 def get_baseline(pos1, pos2):
+
+    """
+    Return the distance between two positions, *pos1* and *pos2*
+
+    """
     return np.sqrt(np.sum((pos1-pos2)**2))
 
 
+def antpos_to_dict(ant_names, ant_corrs):
+    """
+    function to turn comma separated string of antenna names, and a
+    list of floats representing the antenna corrections to those
+    antenna's into a dictionary
+
+    """
+    
+    ant_names=ant_names.split(',')
+    ant_corr=np.asarray(ant_corr)
+    ant_corr=ant_corr.reshape([len(ant_corr)/3,3])
+    return dict( zip( ant_names, ant_corr))
+    
+
+def  antenna_position_correct(vis, antenna_position_corrections, antpos_caltable):
+    """
+    Read in dictionary of antenna positions, calculate caltable for vis,
+    and return the name of the caltable
+
+    """
+
+    #get names and corrections as lists
+    antenna_names=antenna_position_corrections.keys()
+    antenna_corrections=antenna_position_corrections.values()
+
+    #calculate the calibration table
+    gencal(vis=vis, caltable=antpos_caltable, caltype='antpos',
+           antenna=antenna_names, parameter=antenna_corrections)
+    
+    #return the name of the position table
+    return antpos_caltable
+
+def call_wvrgcal(vis, wvrgcal_table, wvrgcal, field_dict, cal_field, antennas,
+                 **wvrgcal_options
+                 ):
+    """
+    Call a given wvrgcal binary with specified options.
+
+    vis: the name of the measurement set (string, representing an ms)
+
+    wvrgcal_table: name of caltable to be produced by wvrgcal
+
+    wvrgcal: string representing the wvrgcal_binary (if True, then
+    uses the first 'wvrgcal' found in system path)
+
+    wvrgcal_options: dictionary of keyword options passed to wvrgcal
+
+    """
+
+    #if no specific binary given, use the first one in the system path
+    if wvrgcal is True:
+        wvrgcal='wvrgcal'
+
+    #set up options used in the fields
+    if wvrgcal_options.has_key('tie_all'):
+        wvrgcal_options.pop('tie_all')
+        wvrgcal_options['tie']=string_creator(field_dict.values())
+            
+    if wvrgcal_options.has_key('stat_cal'):
+        wvrgcal_options.pop('stat_cal')
+        wvrgcal_options['statsource']=field_dict[cal_field]
+    
+    #flag antenna without wvr0? TV?
+    #TODDO
+
+    #set up wvrgcal
+    mywvrgcal = calling_wvrgcal.wvrgcal(wvrgcal)
+    
+    #call wvrgcal
+    mywvrgcal.call(ms=vis, output=wvrgcal_table, **wvrgcal_options)
+
+    #return the output caltable and the version number
+    return wvrgcal_table, mywvrgcal.version
+
+                 
 
 #based on freq
 #pixsize and im_size
@@ -213,12 +301,34 @@ def apriori_flagging(vis, quackinterval=1.5, quackincrement=True):
              quackinterval=quackinterval,
              quackincrement=True)
 
-    #back up data after apriori flagging
-    #TODO: remove this backup?
-    flagmanager(vis=vis, mode='save', versionname='apriori',
-                comment = 'After, autocorr, shadow, and quack.')
 
-def flagging_spw_ends(spw_chandict, method='percent', flagrange=10):
+
+def flagging_spw_ends(vis, spw_chandict, band, logging=None):
+    """
+    Perform flagging of the beginning and end channels of the spw,
+    dependent on the Band of the spws.
+
+    TODO:CURRENTLY HARDCODED, NEED TO DECIDE ON APPROPRIATE METHOD!
+    URGENT!
+    
+    """
+
+    if int(band) == 6:
+        spw_chans =['*:0~5','*:62~63']
+    
+    elif int(band) == 9 and spw_chandict.keys()==[0,1,2,3]:
+        spw_chans = ['0:0~7', '1:0~11', '2:0~19', '3:0~13;59~60;63']
+
+    flagdata(vis=vis, flagbackup=False, spw=spw_chans)
+    
+    if logging:
+        logging.write('Flagging beginning and end spw channels\n')
+        logging.write('Channel string: '+str(spw_chans)+'\n')
+
+
+
+
+def flagging_spw_ends_flagstringcreator(spw_chandict, method='percent', flagrange=10):
 
     """
     Create spw flagging string for ending to flagdata.
@@ -252,58 +362,256 @@ def flagging_spw_ends(spw_chandict, method='percent', flagrange=10):
     
     return spw_flagging
 
+def initial_plots(vis, spws, correlations, root_name, 
+                  overwrite=True, interactive=False, figext='png', logging=None):
+    """
+    Produce plot of amp versus channel for each SPW provided.
+
+    All fields are shown on same plot, and the correlations are
+    written in different colours
+
+    Return list of plots produced
+
+    """
+    correlations=string_creator(correlations)
+    plot_kwargs=dict( vis=vis, xaxis='channel', yaxis='amp', field='',
+                          avgtime='1e8', correlation='XX,YY', coloraxis='corr',
+                          overwrite=overwrite)
+
+    output_plots=[]
+    fig_file_root=root_name+'00_initial_amp_vs_chan_spw'
+    for spw in spws:
+        filename=fig_file_root+str(spw)+'.'+figext
+        plot_kwargs['plotfile']=filename
+        plot_kwargs['spw']=str(spw)
+        plotms(**plot_kwargs)
+        output_plots.append(filename)
+
+    if logging:
+        logging.plots_created(output_plots)
+    return output_plots
 
 
+def spw_channel_marking_fraction(spw_chandict, begin_frac, end_frac):
+    """
+    Create string selecting channels from beginning fraction to
+    end_fraction (inclusive).
+
+    Return string that will select those channel in casa tasks
+
+    """
+
+    spw_chanstring=[]
+    for spw in spw_chandict:
+        n_chans=spw_chandict[spw]
+        spw_chanstring.append(str(spw)+':'
+                              +str(int(round(n_chans/begin_frac)))
+                              +'~'
+                              +str(int(round(n_chans/end_frac)))
+                              )
+    return string_creator(spw_chanstring)
+
+def bpp_calibration(vis, bpp_caltable, spw_chandict,
+                     cal_field_name, ref_ant, 
+                     minsnr=2.0, minblperant=4, solint='inf',
+                     begin_frac=3, end_frac=2):
+    """
+    calibrate the phases of the bandpass calibrator.
+
+    """
+                     
+    print '------ calibrate phases for bandpass calibrator----'
+    
+    
+    spw_chanstring=spw_channel_marking_fraction(spw_chandict, begin_frac, 
+                                                end_frac)
+    
+    gaincal(vis=vis, caltable=bpp_caltable, field=cal_field_name,
+            refant=ref_ant, calmode='p', spw=spw_chanstring,
+            minsnr=minsnr, minblperant=minblperant,
+            solint=solint)
+
+    return bpp_caltable
+            
+
+def caltable_plot(caltable,spw_chandict, figroot, phase=None, amp=None, snr=None, 
+                  interactive=False,
+                  figext='png', correlations=['XX','YY']):
+    """
+    Plots of caltable
+
+    """
+    print '----plotting '+caltable
+
+    plot_file_root=figroot+os.path.splitext(caltable)[0]
+    plot_kwargs=dict( caltable=caltable, xaxis='time', iteration='antenna', 
+                      showgui=interactive, subplot=441)
+    plotfiles=[]
+
+    if phase:
+        print '-----plotting phase vs time'
+        plot_kwargs['yaxis']='phase'
+        plot_kwargs['plotrange']=[0,0,-180,180]
+        for spw in spw_chandict.keys():
+            plot_kwargs['spw']=str(spw)
+            plot_file=plot_file_root+'_phase_vs_time_spw'+str(spw)
+            for poln in correlations:
+                plot_kwargs['poln']=poln
+                plot_kwargs['figfile']=plot_file+'.'+poln+'.'+figext
+                plotcal(**plot_kwargs)
+                plotfiles.append(plot_kwargs['figfile'])
+
+    if amp:
+        print '-----plotting amp vs time'
+        plot_kwargs['yaxis']='amp'
+        plot_kwargs['plotrange']=[]
+        for spw in spw_chandict.keys():
+            plot_kwargs['spw']=str(spw)
+            plot_file=plot_file_root+'_amp_vs_time_spw'+str(spw)
+            for poln in correlations:
+                plot_kwargs['poln']=poln
+                plot_kwargs['figfile']=plot_file+'.'+poln+'.'+figext
+                plotcal(**plot_kwargs)
+                plotfiles.append(plot_kwargs['figfile'])
+
+    if snr:
+        print 'SNR PLOTTING NOT YET IMPLEMENTED'
+
+
+    if logging:
+        logging.plots_created(plotfiles)
+
+    return plotfiles
+            
+
+def bandpass_calibration(vis, unapplied_caltables, bp_caltable, cal_field_name,ref_ant,
+                         solint='inf', fillgaps=20, minblperant=4, solnorm=True,
+                         logging=None):
+
+    """perform bandpass calibration
+
+    """
+    print '----BANDPASS CALIBRATION----'
+    bandpass(vis=vis, caltable=bp_caltable,
+             gaintable=unapplied_caltables,
+             field=cal_field_name,
+             spw='', combine='', solint=solint, minblperant=minblperant, refant=ref_ant,
+             solnorm=solnorm)
+
+    if logging:
+        mylogging.write(' Performing band pass calibration\n')
+        #need to write the parametersinto this
+    return caltable
+
+def gain_calibration(vis,unapplied_caltables, gc_caltable, gc_amp_caltable, 
+                     cal_field_name, ref_ant,
+                     solint='inf',  minblperant=4, minsnr=2,
+                     logging=None):
+
+    """perform gain calibration
+    phase, then amp and phase
+
+    """
+    print '-----GAIN CALIBRATION----'
+    print '.... phase'
+    gaincal(vis=vis, field=cal_field_name, gaintable=unapplied_caltables, 
+            refant=ref_ant, calmode='p', minsnr=minsnr, minblperant=minblperant, 
+            solint=solint, caltable=gc_caltable)
+    unapplied_caltables2=unapplied_caltables[:].append(gc_caltable)
+
+    print '...amp and phase'
+    gaincal(vis=vis, field=cal_field_name, gaintable=unapplied_caltables, 
+            refant=ref_ant, calmode='ap', minsnr=minsnr, minblperant=minblperant,
+            solint=solint, caltable=gc_amp_caltable)
+    unapplied_caltables.append(gc_amp_caltable)
+    
+    return gc_caltable, gc_amp_caltable
+    
 #TODO: BEST WAY TO THINK about plots? -- what types of plots are
 # needed in general, rather than at what stage of data processing?
-# def corrected_plots(vis): """ Make plots of the corrected data
 
-#     plots of:
+#runs, produces plots with data, need to check if these are the most
+#useful plots we could be creating.
+def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot, 
+                    figext='png',avgtime='1e8',
+                    interactive=False, overwrite=True): 
 
-#     amplitude vs time, per spw and per correlation (color the fields)
+    """ Make plots of the corrected data
 
-#     amplitude vs uvdist, per field and per correlation(color the spws)
+    *vis*: The visibility data set
+    *spw_chandict*: the science spws and number of channels
+    *field_dict*: the dictionary of field names
+    *correlations*: which correlations to examine, either a single
+     string or a list of strings
+    *plotroot*: the root name of the plots
+
+    *figext*: type of figure, e.g. 'png' or 'pdf'
+    *avgtime*: time to average over in some plots
+    *interactive*: do you want to interact with the plot?
+    *overwrite*: do you want to overwrite existing plots of the same name?
+     
     
-#     """
-#     print '---- MAKING PLOTS OF CORRECTED DATA ----'
+    plots of:
+
+    amplitude vs time, per spw and per correlation (color the fields)
+
+    amplitude vs uvdist, per field and per correlation (color the spws)
+
+    WARNING: this uses plotms, and at the moment (October 2011) this
+    will not work without opening a gui -- therefore these commands
+    willl not succeed if there is no X11 session. This will be true
+    regardless of what the keyword *interactive* is set to
+    
+    """
+    print '---- MAKING PLOTS OF CORRECTED DATA ----'
+
+
+    plotms_kwargs=dict(
+        vis = vis,
+        xaxis = 'time',
+        yaxis = 'amp',
+        ydatacolumn = 'corrected',
+        coloraxis = 'field',
+        interactive = interactive,
+        format=figext,
+        overwrite=overwrite)
+
+    plotms_kwargs['avgchannel']=string_creator(spw_chandict.values())
+    plotname=plotroot+'_'+plotms_kwargs['xaxis']+'_vs_'+plotms_kwargs['yaxis']
+    #amplitude vs time, per spw and per correlation
+    for correlation in correlations:
+        plotms_kwargs['correlation']=correlation
+        for spw in spw_chandict.keys():
+            plotms_kwargs['spw']=str(spw)
+            plotms_kwargs['plotfile']=plotname+'_spw'+str(spw)+'_'+correlation+'.'+figext
+            plotms_kwargs['title']='Amp vs. Time\n'+str(vis)+'\nSPW: '+str(spw)+' Corr: '+correlation
+            plotms(**plotms_kwargs)
+
+            print '....'+plotms_kwargs['plotfile']
+
+    #amplitude vs uvdist, one field per plot, colors spw
+    plotms_kwargs['xaxis']='uvdist'
+    plotms_kwargs['avgtime']=avgtime
+    plotname=plotroot+'_'+plotms_kwargs['xaxis']+'_vs_'+plotms_kwargs['yaxis']
+    #TODO: does this work if they have
+
+    plotms_kwargs['coloraxis']='spw'
+    plotms_kwargs['spw']=''
+    for correlation in correlations:
+        plotms_kwargs['correlation']=correlation
+        for field in field_dict.values():
+            plotms_kwargs['field']=field
+            plotms_kwargs['plotfile']=plotname+'_f_'+field+'_'+correlation+'.'+figext
+            plotms_kwargs['title']='Amp vs. UVdist\n'+str(vis)+'\nfield: '+field+' Corr: '+correlation
+            plotms(**plotms_kwargs)
+            print '....'+plotms_kwargs['plotfile']
+
+
 
     
-#     plotms_kwargs=dict(
-#         vis = split1,
-#         xaxis = 'time',
-#         yaxis = 'amp',
-#         ydatacolumn = 'corrected',
-#         coloraxis = 'field')
-
-#     #amplitude vs time, per spw and per correlation
-#     for correlation in ['XX','YY']:
-#         plotms_kwargs['correlation']=correlation
-#         for spw in spws:
-#             plotms_kwargs['spw']=str(spw)
-#             plotms_kwargs['plotfile']=corrdata_plot+'_spw'+str(spw)+'_'+correlation+figext
-#             plotms(**plotms_kwargs)
-
-#     #amplitude vs uvdist, one field per plot, colors spw
-#     plotms_kwargs['xaxis']='uvdist'
-#     plotms_kwargs['avgtime']='1e8'
-    
-#     #TODO: does this work if they ahve
-#     #plotsms has no keyword avgchan...
-#     #plotms_kwargs['avgchan']=np.mean(spw_chandict.values())
-#     plotms_kwargs['coloraxis']='spw'
-#     for correlation in ['XX','YY']:
-#         for field in field_dict.values():
-#             plotms_kwargs['field']=field
-#             plotms_kwargs['plotfile']=corrdata_uvplot+field+'_'+correlation+figext
-#             plotms(**plotms_kwargs)
 
 
-
-    
-    
-
-
-
+#works.
 def make_box_and_mask(im_size, mask_dx, mask_dy=None):
     """
     Create the box string for stats images, and the mask vertices
@@ -319,6 +627,9 @@ def make_box_and_mask(im_size, mask_dx, mask_dy=None):
     returns box, mask
 
     """
+
+    if not mask_dy:
+        mask_dy=mask_dx
     box = str(20)+','+str(int(im_size*0.625))+','+str(im_size-20)+','+str(im_size-20)
     x1 = im_size/2 - mask_dx/2
     x2 = im_size/2 + mask_dx/2
@@ -352,6 +663,7 @@ def clean_data(vis, pixsize, im_size, n_iter, field_dict,
     return imagenames
 
 
+#checked, it seems to work
 def create_fits_images(imagenames):
 
     """
@@ -371,6 +683,8 @@ def create_fits_images(imagenames):
         fitslist.append(fitsimage)
     return fitslist
 
+
+#checked that this works, not checked the detailed results.
 def stats_images(imagenames, bx,logfile=None):
     """
     Function to calculate the statistics on the images.
@@ -416,6 +730,7 @@ def stats_images(imagenames, bx,logfile=None):
             myfile.write(stats_string+'\n')
     if logfile:
         myfile.close()
+
 
 def imfit_images(imagenames, mask, logfile=None):
     """
