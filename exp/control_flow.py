@@ -195,17 +195,17 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         #correct phases of bandpass calibrator
         bpp_caltable=bpp_calibration(split1, bpp_caltable, spw_chandict, 
                                      field_dict[cal_field], ref_ant)
-        unapplied_caltables.append(bpp_caltable)
+        #unapplied_caltables.append(bpp_caltable)
         caltable_plot(bpp_caltable, spw_chandict, root_name,  phase=True)
 
         #bandpass calibration
-        bp_caltable=bandpass_calibration(split1, unapplied_caltables, bp_caltable,
+        bp_caltable=bandpass_calibration(split1, bpp_caltable, bp_caltable,
                                          field_dict[cal_field], ref_ant)
         #reset unapplied caltables! DON'T WANT TO APPLY THE BPP CALTABLE AFTER THIS!
         unapplied_caltables=[]
         unapplied_caltables.append(bp_caltable)
 
-        caltable_plot(bp_caltable, spw_chandict, root_name, phase=True, amp=True)
+        bandpass_calplot(bp_caltable, spw_chandict, root_name)
 
         #gain calibration
         gc_caltable, gc_amp_caltable=gain_calibration(split1, unapplied_caltables[:], 

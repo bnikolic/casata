@@ -6,7 +6,8 @@ import os
 import casata.tools.ctools
 from casata.tools.vtasks import *
 import calling_wvrgcal
-
+import matplotlib
+import matplotlib.pyplot as plt
 #TODO: logging? want all parameters used to be recorded in output file.
 #TODO: think about versiosning
 
@@ -522,7 +523,7 @@ def get_post_split_spw_chandict(spw_chandict):
 
 def bpp_calibration(vis, bpp_caltable, spw_chandict,
                      cal_field_name, ref_ant, 
-                     minsnr=2.0, minblperant=4, solint='inf',
+                     minsnr=2.0, minblperant=4, solint='60s',
                      begin_frac=3, end_frac=2):
     """
     calibrate the phases of the bandpass calibrator.
@@ -542,6 +543,55 @@ def bpp_calibration(vis, bpp_caltable, spw_chandict,
 
     return bpp_caltable
             
+def bandpass_calplot(caltable, spw_chandict, figroot, interactive=False, 
+                     figext='png',
+                     logging=None):
+    """
+    Plots of phase and amp vs channel, to check the bandpass calibrator
+
+    """
+    print '---- plotting phase vs channel '+caltable
+    
+    plot_file_root=figroot+caltable.split('_')[-1]
+    plot_kwargs=dict( caltable=caltable, xaxis='chan', yaxis='phase',
+                      iteration='antenna', 
+                      showgui=interactive, subplot=551, plotrange=[0,0,-180,180],
+                      plotsymbol=',', fontsize=7)
+    plotfiles=[]
+    for spw in spw_chandict.keys():
+        plot_kwargs['spw']=str(spw)
+        figname=plot_file_root+'_phase_vs_channel_spw'+str(spw)
+        plot_kwargs['figfile']=figname+'.'+figext
+        plotcal(**plot_kwargs)
+        fig=plt.gcf()
+        for ax in fig.axes:
+            title=ax.get_title()
+            new_title=title.split('Antenna=')[1].replace("'","")
+            ax.set_title(new_title,fontsize=7)
+        plt.draw()
+        fig.savefig(plot_kwargs['figfile'], bbox_inches='tight', pad_inches=0.2)
+        plotfiles.append(plot_kwargs['figfile'])
+        
+        
+    print '---- plotting amp vs channel '+caltable
+    plot_kwargs['yaxis']='amp'
+    plot_kwargs['plotrange']=[]
+    for spw in spw_chandict.keys():
+        plot_kwargs['spw']=str(spw)
+        figname=plot_file_root+'_amp_vs_channel_spw'+str(spw)
+        plot_kwargs['figfile']=figname+'.'+figext
+        plotcal(**plot_kwargs)
+        fig=plt.gcf()
+        for ax in fig.axes:
+            title=ax.get_title()
+            new_title=title.split('Antenna=')[1].replace("'","")
+            ax.set_title(new_title, fontsize=7)
+        plt.draw()
+        fig.savefig(plot_kwargs['figfile'], bbox_inches='tight', pad_inches=0.2)
+        plotfiles.append(plot_kwargs['figfile'])
+
+    return plotfiles
+
 
 def caltable_plot(caltable,spw_chandict, figroot, phase=None, amp=None, snr=None, 
                   interactive=False,
@@ -596,7 +646,8 @@ def caltable_plot(caltable,spw_chandict, figroot, phase=None, amp=None, snr=None
             
 
 def bandpass_calibration(vis, unapplied_caltables, bp_caltable, cal_field_name,ref_ant,
-                         solint='inf', fillgaps=20, minblperant=4, solnorm=True,
+                         solint='inf', fillgaps=20, minblperant=4, solnorm=True, 
+                         combine='scan',
                          logging=None):
 
     """perform bandpass calibration
@@ -606,7 +657,8 @@ def bandpass_calibration(vis, unapplied_caltables, bp_caltable, cal_field_name,r
     bandpass(vis=vis, caltable=bp_caltable,
              gaintable=unapplied_caltables,
              field=cal_field_name,
-             spw='', combine='', solint=solint, minblperant=minblperant, refant=ref_ant,
+             spw='', combine=combine, solint=solint, minblperant=minblperant, 
+             refant=ref_ant,
              solnorm=solnorm)
 
     if logging:
