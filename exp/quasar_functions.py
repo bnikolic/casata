@@ -5,8 +5,10 @@ import os
 #get casa tasks and tools from casata
 import casata.tools.ctools
 from casata.tools.vtasks import *
+import calling_wvrgcal
 
-
+#TODO: logging? want all parameters used to be recorded in output file.
+#TODO: think about versiosning
 
 _script_log_level=1
 
@@ -30,7 +32,93 @@ def showinfo(message, level):
 # or one channel? from corresponding real spectral windows.
 
 
-#ODO: use casata, prob should break up into separate functions
+#write shorter versions of the stuff inside get_vis_info...
+def get_antenna_names(vis):
+    """
+    get the antennas listed within a measurement set.
+    """
+    
+    ms=casata.tools.ctools.get("ms")
+    ms.open(vis)
+    antennas=ms.range(items='antennas')['antennas']
+    ms.close()
+    
+    return antennas
+
+def get_field_dictionary(vis):
+    """
+    Return a dictionary containing the numerical field ID's as keys,
+    and the string field names as values, from a measurement set
+
+    """    
+    #open the measurement set
+    ms=casata.tools.ctools.get("ms")
+    ms.open(vis)
+    
+    #get field names and ids
+    fields=ms.range(items='fields')['fields']
+    field_ids=ms.range(items='field_id')['field_id']
+    
+    #close the measuremnt set
+    ms.close()
+    
+    #create dictionary
+    field_dict=dict( zip( field_ids, fields))
+    
+    return field_dict
+
+def get_spw_channel_dictionary(vis, spws=[1,3,5,7]):
+    """
+    Return a dictionary containing the numerical spw ID's as keys,
+    and the numerical number of channels in that spw as values, from a measurement set
+
+    """    
+    #open the measurement set
+    ms=casata.tools.ctools.get("ms")
+    ms.open(vis)
+    
+    nchans=[]
+    
+    #go through each requested spw
+    for i in spws:
+        ms.selectinit(datadescid = i)
+        ranges=ms.range(items = ['num_chan','ref_frequency','chan_freq'])
+        number_channels = ranges['num_chan']
+        nchans.append(number_channels.item())
+    
+    #close the measurement set
+    ms.close()
+    
+    #create dictionary
+    spw_chan_dict=dict( zip( spws, nchans))
+    
+    return spw_chan_dict
+
+def get_spw_frequency(vis, spws=[1,3,5,7]):
+    """
+    Return a dictionary containing the numerical SPW ID's as keys, and
+    the numerical frequency of the SPW as values, from measurement set
+    vis.
+
+    """
+    #open the measurement set
+    ms=casata.tools.ctools.get("ms")
+    ms.open(vis)
+
+    freqs=[]
+    for i in spws:
+        ms.selectinit(datadescid = i)
+        ranges=ms.range(items = ['ref_frequency'])    
+        frequency = ranges['ref_frequency']
+        freqs.append( frequency.item() )
+    
+    ms.close()
+    
+    spw_freq_dict=dict( zip( spws, freqs ) )
+    
+    return spw_freq_dict
+
+#TODO:prob should break up into separate functions
 def get_vis_info(myvis, spws=[1,3,5,7]):
     """
     For a given visability and choice of science spws,
@@ -39,6 +127,7 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     field names
     field ids
     number of channels per SPW
+    frequencies per spw
     longest baseline
 
     Takes in the name of the measurement set, and the list of science
@@ -46,7 +135,7 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
 
     Returns a tuple of the:
     
-    antennas, fields, field_ids, spw_chandict, spw_freqdict, 
+    antennas, field_dict, spw_chandict, spw_freqdict, 
               band, max_baseline
 
     *antennas* and *field_ids* are numpy arrays of strings
@@ -129,7 +218,7 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     spw_banddict=dict( zip( spws, bands ) )
 
     #check that all the spws should be in same band?
-    band=spw_banddict[1]
+    #band=spw_banddict[0]
     if len( set (spw_banddict.values() ))==1:
         showinfo('All spws in same band', 2)
         band=spw_banddict.values()[0]
@@ -137,7 +226,7 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     else:
         print 'WARNING: NOT ALL SPWS IN SAME BAND!'
         print 'This may represent a programming error by the author...'
-
+        band = spw_banddict
 
     #get (physical) baselines
     tb=casata.tools.ctools.get("tb")
@@ -181,9 +270,9 @@ def antpos_to_dict(ant_names, ant_corrs):
     """
     
     ant_names=ant_names.split(',')
-    ant_corr=np.asarray(ant_corr)
-    ant_corr=ant_corr.reshape([len(ant_corr)/3,3])
-    return dict( zip( ant_names, ant_corr))
+    ant_corrs=np.asarray(ant_corrs)
+    ant_corrs=ant_corrs.reshape([len(ant_corrs)/3,3])
+    return dict( zip( ant_names, ant_corrs))
     
 
 def  antenna_position_correct(vis, antenna_position_corrections, antpos_caltable):
@@ -194,8 +283,8 @@ def  antenna_position_correct(vis, antenna_position_corrections, antpos_caltable
     """
 
     #get names and corrections as lists
-    antenna_names=antenna_position_corrections.keys()
-    antenna_corrections=antenna_position_corrections.values()
+    antenna_names=string_creator(antenna_position_corrections.keys() )
+    antenna_corrections=list(np.asarray(antenna_position_corrections.values()).flatten())
 
     #calculate the calibration table
     gencal(vis=vis, caltable=antpos_caltable, caltype='antpos',
@@ -259,7 +348,7 @@ def get_imaging_params(freq, max_baseline):
     #need to cover primary beam
     #NOT YET DONE
 
-    pixsize=radians_in_arcseconds*(3e8/freq)/max_baseline
+    pixsize=0.25*radians_in_arcseconds*(3e8/freq)/max_baseline
     im_size=512
     return pixsize, im_size
 
@@ -315,9 +404,13 @@ def flagging_spw_ends(vis, spw_chandict, band, logging=None):
 
     if int(band) == 6:
         spw_chans =['*:0~5','*:62~63']
-    
+        spw_chans=['*:0~3']
+    elif int(band) == 3:
+        #flag first 7 channels
+        spw_chans =['*:0~6']
+        
     elif int(band) == 9 and spw_chandict.keys()==[0,1,2,3]:
-        spw_chans = ['0:0~7', '1:0~11', '2:0~19', '3:0~13;59~60;63']
+        spw_chans = string_creator(['0:0~7', '1:0~11', '2:0~19', '3:0~13;59~60;63'])
 
     flagdata(vis=vis, flagbackup=False, spw=spw_chans)
     
@@ -361,6 +454,7 @@ def flagging_spw_ends_flagstringcreator(spw_chandict, method='percent', flagrang
         raise KeyError
     
     return spw_flagging
+
 
 def initial_plots(vis, spws, correlations, root_name, 
                   overwrite=True, interactive=False, figext='png', logging=None):
@@ -459,9 +553,9 @@ def caltable_plot(caltable,spw_chandict, figroot, phase=None, amp=None, snr=None
     """
     print '----plotting '+caltable
 
-    plot_file_root=figroot+os.path.splitext(caltable)[0]
+    plot_file_root=figroot+caltable.split('_')[-1]
     plot_kwargs=dict( caltable=caltable, xaxis='time', iteration='antenna', 
-                      showgui=interactive, subplot=441)
+                      showgui=interactive, subplot=551)
     plotfiles=[]
 
     if phase:
@@ -534,13 +628,15 @@ def gain_calibration(vis,unapplied_caltables, gc_caltable, gc_amp_caltable,
     gaincal(vis=vis, field=cal_field_name, gaintable=unapplied_caltables, 
             refant=ref_ant, calmode='p', minsnr=minsnr, minblperant=minblperant, 
             solint=solint, caltable=gc_caltable)
-    unapplied_caltables2=unapplied_caltables[:].append(gc_caltable)
 
-    print '...amp and phase'
-    gaincal(vis=vis, field=cal_field_name, gaintable=unapplied_caltables, 
+    unapplied_caltables2=unapplied_caltables[:]
+    unapplied_caltables2.append(gc_caltable)
+
+    print '.... amp and phase'
+    gaincal(vis=vis, field=cal_field_name, gaintable=unapplied_caltables2, 
             refant=ref_ant, calmode='ap', minsnr=minsnr, minblperant=minblperant,
             solint=solint, caltable=gc_amp_caltable)
-    unapplied_caltables.append(gc_amp_caltable)
+
     
     return gc_caltable, gc_amp_caltable
     
@@ -554,7 +650,7 @@ def apply_calibrations_calsep(vis, caltables, field_dict, cal_field):
     TODO: ensure this works if only one source?
     """
 
-    #should this be hardcoed?
+    #should this be hardcoded?
     #check if right?
     cal_cal_interp=['nearest', 'nearest', 'nearest']
     cal_sci_interp=['nearest', 'linear','linear']
@@ -618,7 +714,7 @@ def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot,
     WARNING: this uses plotms, and at the moment (October 2011) this
     will not work without opening a gui -- therefore these commands
     willl not succeed if there is no X11 session. This will be true
-    regardless of what the keyword *interactive* is set to
+    regardless of what the keyword *interactive* is set to.
     
     """
     print '---- MAKING PLOTS OF CORRECTED DATA ----'
@@ -699,8 +795,8 @@ def make_box_and_mask(im_size, mask_dx, mask_dy=None):
 
 
 
-def clean_data(vis, pixsize, im_size, n_iter, field_dict,
-               cleanweighting, cleanspw, cleanmode):
+def clean_data(vis, pixsize, im_size, mask,  n_iter, field_dict,
+               cleanweighting, cleanspw, cleanmode, root):
     print '---- CLEANING ----'
     
     clean_kwargs=dict(vis=vis, cell=pixsize, imsize=im_size,
@@ -710,13 +806,15 @@ def clean_data(vis, pixsize, im_size, n_iter, field_dict,
                       robust = 0.0,
                       spw = cleanspw,
                       mode = cleanmode,
-                      mask = [x1, y1, x2, y2])
+                      mask = mask)
 
     imagenames=[]
     for field in field_dict.values():
         clean_kwargs['imagename']=root+'f'+field
+        clean_kwargs['field']=field
+        print clean_kwargs
         clean(**clean_kwargs)
-        imagenames.append(clean_kwargs['imagename'])
+        imagenames.append(clean_kwargs['imagename']+'.image')
 
     return imagenames
 
