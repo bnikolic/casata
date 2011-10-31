@@ -33,3 +33,4 @@ from clearstat import clearstat
 from imstat import imstat
 from imfit import imfit
 from flagautocorr import flagautocorr
+from imhead import imhead
