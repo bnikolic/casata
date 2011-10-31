@@ -543,57 +543,58 @@ def bpp_calibration(vis, bpp_caltable, spw_chandict,
 
     return bpp_caltable
             
-def bandpass_calplot(caltable, spw_chandict, figroot, interactive=False, 
-                     figext='png',
-                     logging=None):
-    """
-    Plots of phase and amp vs channel, to check the bandpass calibrator
+# def bandpass_calplot(caltable, spw_chandict, figroot, interactive=False, 
+#                      figext='png',
+#                      logging=None):
+#     """
+#     Plots of phase and amp vs channel, to check the bandpass calibrator
 
-    """
-    print '---- plotting phase vs channel '+caltable
+#     """
+#     print '---- plotting phase vs channel '+caltable
     
-    plot_file_root=figroot+caltable.split('_')[-1]
-    plot_kwargs=dict( caltable=caltable, xaxis='chan', yaxis='phase',
-                      iteration='antenna', 
-                      showgui=interactive, subplot=551, plotrange=[0,0,-180,180],
-                      plotsymbol=',', fontsize=7)
-    plotfiles=[]
-    for spw in spw_chandict.keys():
-        plot_kwargs['spw']=str(spw)
-        figname=plot_file_root+'_phase_vs_channel_spw'+str(spw)
-        plot_kwargs['figfile']=figname+'.'+figext
-        plotcal(**plot_kwargs)
-        fig=plt.gcf()
-        for ax in fig.axes:
-            title=ax.get_title()
-            new_title=title.split('Antenna=')[1].replace("'","")
-            ax.set_title(new_title,fontsize=7)
-        plt.draw()
-        fig.savefig(plot_kwargs['figfile'], bbox_inches='tight', pad_inches=0.2)
-        plotfiles.append(plot_kwargs['figfile'])
+#     plot_file_root=figroot+caltable.split('_')[-1]
+#     plot_kwargs=dict( caltable=caltable, xaxis='chan', yaxis='phase',
+#                       iteration='antenna', 
+#                       showgui=interactive, subplot=551, plotrange=[0,0,-180,180],
+#                       plotsymbol=',', fontsize=7)
+#     plotfiles=[]
+#     for spw in spw_chandict.keys():
+#         plot_kwargs['spw']=str(spw)
+#         figname=plot_file_root+'_phase_vs_channel_spw'+str(spw)
+#         plot_kwargs['figfile']=figname+'.'+figext
+#         plotcal(**plot_kwargs)
+#         fig=plt.gcf()
+#         for ax in fig.axes:
+#             title=ax.get_title()
+#             new_title=title.split('Antenna=')[1].replace("'","")
+#             ax.set_title(new_title,fontsize=7)
+#         plt.draw()
+#         fig.savefig(plot_kwargs['figfile'], bbox_inches='tight', pad_inches=0.2)
+#         plotfiles.append(plot_kwargs['figfile'])
         
         
-    print '---- plotting amp vs channel '+caltable
-    plot_kwargs['yaxis']='amp'
-    plot_kwargs['plotrange']=[]
-    for spw in spw_chandict.keys():
-        plot_kwargs['spw']=str(spw)
-        figname=plot_file_root+'_amp_vs_channel_spw'+str(spw)
-        plot_kwargs['figfile']=figname+'.'+figext
-        plotcal(**plot_kwargs)
-        fig=plt.gcf()
-        for ax in fig.axes:
-            title=ax.get_title()
-            new_title=title.split('Antenna=')[1].replace("'","")
-            ax.set_title(new_title, fontsize=7)
-        plt.draw()
-        fig.savefig(plot_kwargs['figfile'], bbox_inches='tight', pad_inches=0.2)
-        plotfiles.append(plot_kwargs['figfile'])
+#     print '---- plotting amp vs channel '+caltable
+#     plot_kwargs['yaxis']='amp'
+#     plot_kwargs['plotrange']=[]
+#     for spw in spw_chandict.keys():
+#         plot_kwargs['spw']=str(spw)
+#         figname=plot_file_root+'_amp_vs_channel_spw'+str(spw)
+#         plot_kwargs['figfile']=figname+'.'+figext
+#         plotcal(**plot_kwargs)
+#         fig=plt.gcf()
+#         for ax in fig.axes:
+#             title=ax.get_title()
+#             new_title=title.split('Antenna=')[1].replace("'","")
+#             ax.set_title(new_title, fontsize=7)
+#         plt.draw()
+#         fig.savefig(plot_kwargs['figfile'], bbox_inches='tight', pad_inches=0.2)
+#         plotfiles.append(plot_kwargs['figfile'])
 
-    return plotfiles
+#     return plotfiles
 
 
-def caltable_plot(caltable,spw_chandict, figroot, phase=None, amp=None, snr=None, 
+def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
+                  phase=None, amp=None, snr=None, 
                   interactive=False,
                   figext='png', correlations=['X','Y'],
                   logging=None):
@@ -605,45 +606,71 @@ def caltable_plot(caltable,spw_chandict, figroot, phase=None, amp=None, snr=None
 
     plot_file_root=figroot+caltable.split('_')[-1]
     plot_kwargs=dict( caltable=caltable, xaxis='time', iteration='antenna', 
-                      showgui=interactive, subplot=551)
+                      showgui=interactive, subplot=551, plotsymbol=',',
+                      fontsize=7 )
+    plot_kwargs['xaxis']=xaxis
     plotfiles=[]
 
     if phase:
-        print '-----plotting phase vs time'
+        print '-----plotting phase vs '+xaxis
         plot_kwargs['yaxis']='phase'
+        yaxis=plot_kwargs['yaxis']
         plot_kwargs['plotrange']=[0,0,-180,180]
-        for spw in spw_chandict.keys():
-            plot_kwargs['spw']=str(spw)
-            plot_file=plot_file_root+'_phase_vs_time_spw'+str(spw)
-            for poln in correlations:
-                plot_kwargs['poln']=poln
-                print poln
-                plot_kwargs['figfile']=plot_file+'.'+poln+'.'+figext
-                plotcal(**plot_kwargs)
-                plotfiles.append(plot_kwargs['figfile'])
+        plot_file = plot_file_root+'_'+yaxis+'_vs_'+xaxis
+        plotfiles = plotfiles + plotcal_util(plot_kwargs, spw_chandict.keys(),
+                                         correlations, plot_file, figext)
 
     if amp:
-        print '-----plotting amp vs time'
+        print '-----plotting amp vs '+xaxis
         plot_kwargs['yaxis']='amp'
+        yaxis=plot_kwargs['yaxis']
         plot_kwargs['plotrange']=[]
-        for spw in spw_chandict.keys():
-            plot_kwargs['spw']=str(spw)
-            plot_file=plot_file_root+'_amp_vs_time_spw'+str(spw)
-            for poln in correlations:
-                plot_kwargs['poln']=poln
-                plot_kwargs['figfile']=plot_file+'.'+poln+'.'+figext
-                plotcal(**plot_kwargs)
-                plotfiles.append(plot_kwargs['figfile'])
+        plot_file = plot_file_root+'_'+yaxis+'_vs_'+xaxis
+        plotfiles = plotfiles + plotcal_util(plot_kwargs, spw_chandict.keys(),
+                                             correlations, plot_file, figext)
 
     if snr:
-        print 'SNR PLOTTING NOT YET IMPLEMENTED'
+        print '----- plotting snr vs '+xaxis
+        plot_kwargs['yaxis']='snr'
+        yaxis=plot_kwargs['yaxis']
+        plot_kwargs['plotrange']=[]
+        plot_file = plot_file_root+'_'+yaxis+'_vs_'+xaxis
 
+        plotfiles = plotfiles + plotcal_util(plot_kwargs, spw_chandict.keys(), 
+                                             correlations, plot_file, figext)
 
     if logging:
         logging.plots_created(plotfiles)
 
     return plotfiles
-            
+
+def plotcal_util(plot_kwargs, spws, correlations, plot_file_root, figext):
+    """
+    Utility for creating plotcal figures for each spw and each correlation given.
+
+    """
+    plotfiles=[]
+    for spw in spws:
+        plot_kwargs['spw']=str(spw)
+        plot_file=plot_file_root+'_spw'+str(spw)
+        for poln in correlations:
+            plot_kwargs['poln']=poln
+            plot_kwargs['figfile']=plot_file+'.'+poln+'.'+figext
+            plotcal(**plot_kwargs)
+            fig=plt.gcf()
+            for ax in fig.axes:
+                title=ax.get_title()
+                new_title=title.split('Antenna=')[1].replace("'","")
+                ax.set_title(new_title,fontsize=7)
+                if plot_kwargs['xaxis']=='time':
+                    mlines=ax.lines[0]
+                    mlines.set_linestyle('solid')
+                    mlines.set_linewidth(0.5)
+            plt.draw()
+            fig.savefig(plot_kwargs['figfile'], bbox_inches='tight', pad_inches=0.2)
+            plotfiles.append(plot_kwargs['figfile'])
+    return plotfiles
+    
 
 def bandpass_calibration(vis, unapplied_caltables, bp_caltable, cal_field_name,ref_ant,
                          solint='inf', fillgaps=20, minblperant=4, solnorm=True, 

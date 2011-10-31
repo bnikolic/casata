@@ -196,7 +196,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         bpp_caltable=bpp_calibration(split1, bpp_caltable, spw_chandict, 
                                      field_dict[cal_field], ref_ant)
         #unapplied_caltables.append(bpp_caltable)
-        caltable_plot(bpp_caltable, spw_chandict, root_name,  phase=True)
+        caltable_plot(bpp_caltable, spw_chandict, root_name,  phase=True, snr=True)
 
         #bandpass calibration
         bp_caltable=bandpass_calibration(split1, bpp_caltable, bp_caltable,
@@ -205,7 +205,8 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         unapplied_caltables=[]
         unapplied_caltables.append(bp_caltable)
 
-        bandpass_calplot(bp_caltable, spw_chandict, root_name)
+        caltable_plot(bp_caltable, spw_chandict, root_name, xaxis='chan', phase=True,
+                      amp=True, snr=True)
 
         #gain calibration
         gc_caltable, gc_amp_caltable=gain_calibration(split1, unapplied_caltables[:], 
@@ -214,8 +215,9 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
                                              ref_ant)
         unapplied_caltables.append(gc_caltable)
         unapplied_caltables.append(gc_amp_caltable)
-        caltable_plot(gc_caltable, spw_chandict, root_name, phase=True)
-        caltable_plot(gc_amp_caltable, spw_chandict, root_name, phase=True, amp=True)
+        caltable_plot(gc_caltable, spw_chandict, root_name, phase=True, snr=True)
+        caltable_plot(gc_amp_caltable, spw_chandict, root_name, phase=True, amp=True,
+                      snr=True)
 
         #apply calibrations, slightly differently for cal_field and regular
         apply_calibrations_calsep(split1, unapplied_caltables, field_dict, cal_field)
