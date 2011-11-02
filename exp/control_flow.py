@@ -5,10 +5,12 @@ from quasar_functions import *
 from casata.tools.vtasks import *
 import numpy as np
 import calling_wvrgcal
+import logging
+import time
 
 def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
                    control='complete', wvrgcal_options=None, antpos_corr=None, 
-                     cal_field=0, ref_ant='DV02'):
+                     cal_field=0, ref_ant='DV02', logfile=None, n_iter=100):
 
     """
     Function to reduce 4 (and 1?) quasar data sets
@@ -37,7 +39,8 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     
     
     """
-    
+    starttime_s=time.time()
+    starttime_clock=time.ctime()
     #control flow of quasar script
     if control=='complete':
          initial_calibrations=True
@@ -75,6 +78,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         stats=True
     
 
+    
     #wvrgcal setup; run if options are defined (or if wvrgcal_options
     #set to True...)
     if wvrgcal_options:
@@ -87,23 +91,41 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         do_wvrgcal=None
             
 
+    #ms names
+    root_name = os.path.split( os.path.splitext(vis)[0] )[1]
+    split1=root_name+'_split1.ms'
+    split2=root_name+'_cont.ms'
+    #setup the logfile
+    mylog=mylogger(root_name=root_name, output_file=True, console=True, logfile=logfile)
+
+    mylog.header(root_name, punctuation='=')
+    mylog.message('quasar_reduction is being performed\n')
+    optdict=dict(vis=vis, spws=[1,3,5,7], user_flagging_script=user_flagging_script,
+                   control=control, wvrgcal_options=wvrgcal_options, 
+                   antpos_corr=antpos_corr, 
+                   cal_field=cal_field, ref_ant=ref_ant, logfile=logfile)
+    mylog.dictprint('Options called', optdict)
+    mylog.info('Reduction began at', starttime_clock)
+
     #always do: setup names, parameters and get basic info
     #get basic info from data set
     #TODO: SEPARATE THIS INTO SEPARATE FUNCTIONS!
-    antennas, field_dict, spw_chandict, spw_freqdict, band, max_baseline=get_vis_info(vis, spws)
+    mylog.header('Basic Info', punctuation='-')
+    antennas, field_dict, spw_chandict, spw_freqdict, band, max_baseline=get_vis_info(vis,
+                     spws, logging=mylog)
 
+    
+    
     #TODO: GET THIS FROM VIS
     correlations=['XX','YY']
+    mylog.info('Manually set correlations are', str(correlations))
     
     #setup names and parameters -- leave it here rather than in
     #various functions so if we need to improve in future its easy to
     #do. 
     #TODO: THINK ABOUT FILE NAMES
 
-    #ms names
-    root_name = os.path.split( os.path.splitext(vis)[0] )[1]
-    split1=root_name+'_split1.ms'
-    split2=root_name+'_cont.ms'
+
 
     #spw channel dictionary after splitting out the spws of interest:
     post_split_spws=range(0,len(spws))
@@ -132,18 +154,20 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     cleanspw='' #NOTE THAT SPW HERE AND AFTER SPLIT HAVE DIFF NAMES
 
     #TODO: CALCULATE THIS AUTOMATICALLY!
-    mask_dx=18
-    n_iter=100
+    mask_dx=20
+
     #list of unapplied calibration tables
     unapplied_caltables=[]
 
 
     #TODO: should copy data over?
     if initial_calibrations:
+
+        mylog.header('Initial flagging and calibrations', punctuation='=')
         #initial calibrations
         if antpos_corr:
             caltable_name=antenna_position_correct(vis, antpos_corr,
-                                                   antpos_caltable)
+                                                   antpos_caltable, logging=mylog)
             unapplied_caltables.append(caltable_name)
 
         #if wvrgcal chosen,
@@ -152,7 +176,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
             caltable_name, wvrversion = call_wvrgcal(vis, wvrgcal_table,
                                                      wvrgcal, 
                                                      field_dict, cal_field,
-                                                     antennas,
+                                                     antennas, logging=mylog,
                                                      **wvrgcal_options)
             unapplied_caltables.append(caltable_name)
 
@@ -173,40 +197,49 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         spw_chandict=post_split_spw_chandict
        
         #apriori  and beginning/end channel flagging
-        apriori_flagging(split1)
+        apriori_flagging(split1, logging=mylog)
 
-        flagging_spw_ends(split1, spw_chandict, band)
+        flagging_spw_ends(split1, spw_chandict, band, logging=mylog)
 
         #plots of data
         inital_plot_names=initial_plots(split1, spw_chandict.keys(), correlations, 
-                                        root_name)
+                                        root_name, logging=mylog)
 
     #ensure correct spws used even if not running whole thing
     spw_chandict=post_split_spw_chandict
     unapplied_caltables=[]
     #if requested, do user chosen flagging commands
     if user_flagging:
+
+        mylog.header('USER FLAGGING', punctuation='=')
         execfile(user_flagging_script)
+        mylog.message('User supplied flagging was carried out')
+        mylog.info('User flagging script', user_flagging_script)
 
         #plots after apriori and user flagging???
         #after_apu_flagging_plots(myvis, **info_dict)
           
     if calibration:
+
+        mylog.header('CALIBRATION', punctuation='=')
+                
         #correct phases of bandpass calibrator
         bpp_caltable=bpp_calibration(split1, bpp_caltable, spw_chandict, 
-                                     field_dict[cal_field], ref_ant)
+                                     field_dict[cal_field], ref_ant,
+                                     logging=mylog)
         #unapplied_caltables.append(bpp_caltable)
-        caltable_plot(bpp_caltable, spw_chandict, root_name,  phase=True, snr=True)
+        caltable_plot(bpp_caltable, spw_chandict, root_name,  phase=True, snr=True,
+                      logging=mylog)
 
         #bandpass calibration
         bp_caltable=bandpass_calibration(split1, bpp_caltable, bp_caltable,
-                                         field_dict[cal_field], ref_ant)
+                                         field_dict[cal_field], ref_ant, logging=mylog)
         #reset unapplied caltables! DON'T WANT TO APPLY THE BPP CALTABLE AFTER THIS!
         unapplied_caltables=[]
         unapplied_caltables.append(bp_caltable)
 
         caltable_plot(bp_caltable, spw_chandict, root_name, xaxis='chan', phase=True,
-                      amp=True, snr=True)
+                      amp=True, snr=True, logging=mylog)
 
         #gain calibration
         gc_caltable, gc_amp_caltable=gain_calibration(split1, unapplied_caltables[:], 
@@ -215,15 +248,17 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
                                              ref_ant)
         unapplied_caltables.append(gc_caltable)
         unapplied_caltables.append(gc_amp_caltable)
-        caltable_plot(gc_caltable, spw_chandict, root_name, phase=True, snr=True)
+        caltable_plot(gc_caltable, spw_chandict, root_name, phase=True, snr=True, 
+                      logging=mylog)
         caltable_plot(gc_amp_caltable, spw_chandict, root_name, phase=True, amp=True,
-                      snr=True)
+                      snr=True, logging=mylog)
 
         #apply calibrations, slightly differently for cal_field and regular
         apply_calibrations_calsep(split1, unapplied_caltables, field_dict, cal_field)
 
         #plot corrected data
-        corrected_plots(split1, spw_chandict, field_dict,  correlations, root_name)
+        corrected_plots(split1, spw_chandict, field_dict,  correlations, root_name, 
+                        logging=mylog)
 
         #split out corrected data, averaging all channels in each spw
         #No need to make a function wrapper to do this?
@@ -242,7 +277,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     if imaging:
         #box for computing image statistics within:
         #TODO: less hardcoded!
-
+        mylog.header('IMAGING', punctuation='=')
         #freq=np.mean(spw_freqdict.values())
         #pixsize, im_size=get_imaging_params(freq, max_baseline)
         #bx, mask = make_box_and_mask(im_size, mask_dx)
@@ -250,17 +285,21 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         #clean data (i.e. make images)
         #TODO: test this function
         imagenames=clean_data(split2, pixsize, im_size, mask, n_iter, field_dict,
-                              cleanweighting, cleanspw, cleanmode, root_name)
+                              cleanweighting, cleanspw, cleanmode, root_name, logging=mylog)
 
         #make fits images:
-        fitsimages=create_fits_images(imagenames)
+        fitsimages=create_fits_images(imagenames, logging=mylog)
 
     if stats:
         #compute stats                
-        stats_images(imagenames, bx, logfile=None)
-        imfit_images(imagenames, mask, logfile=None)
+        stats_images(imagenames, bx, logging=mylog)
+        imfit_images(imagenames, mask, logging=mylog)
     
     
+    finishtime_s=time.time()
+    finishtime_clock=time.ctime()
+    mylog.info('Finished at', finishtime_clock)
+    mylog.info('Took', '%.1F'%((finishtime_s-starttime_s)/60.0)+' minutes')
     #TODO: delete files -- need to keep track of what has been created
     #so it can be deleted...  don't want to delete too much while its
     #running, to allow us to go back to extra flagging stage and run

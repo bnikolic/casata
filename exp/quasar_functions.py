@@ -6,8 +6,37 @@ import os
 import casata.tools.ctools
 from casata.tools.vtasks import *
 import calling_wvrgcal
+
+#matplotlib
 import matplotlib
 import matplotlib.pyplot as plt
+
+#create unique log names
+import logging
+import tempfile
+
+
+def create_log_file(root_name, mode='w', tag=None):
+    """create a logfile with a unique name, opened in the specified
+    mode, using the root_name as the prefix, and optionally with
+    '_'+tag added to the prefix.
+
+    Returns the tempfile object 'mylogfile: the python file object
+    is in mylogfile.file, and the name of the file is in
+    mylogfile.name
+
+    """
+    prefix=root_name+'_'
+    if tag:
+        prefix=prefix+tag+'_'
+    mylogfile=tempfile.NamedTemporaryFile(mode=mode, prefix=prefix,
+                                          suffix='.log', dir=os.getcwd(), delete=False) 
+
+    return mylogfile
+
+
+
+
 #TODO: logging? want all parameters used to be recorded in output file.
 #TODO: think about versiosning
 
@@ -120,7 +149,7 @@ def get_spw_frequency(vis, spws=[1,3,5,7]):
     return spw_freq_dict
 
 #TODO:prob should break up into separate functions
-def get_vis_info(myvis, spws=[1,3,5,7]):
+def get_vis_info(myvis, spws=[1,3,5,7], logging=None ):
     """
     For a given visability and choice of science spws,
     get the:
@@ -157,18 +186,30 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     HAVE FLAGGED THAT ANTENNA AT A LATER POINT!
 
     """
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
 
     #open the measurement set
     ms=casata.tools.ctools.get("ms")
     ms.open(myvis)
 
+    mylog.info('Data set', myvis)
+    mylog.info('Req. SPWS', str(spws) )
+
     #get the values that are constant for all spws (antenna names,
     #field names and field_ids)
     antennas=ms.range(items='antennas')['antennas']
-    fields=ms.range(items='fields')['fields']
-    field_ids=ms.range(items='field_id')['field_id']
+    mylog.info('Antennas', str(antennas))
 
+    fields=ms.range(items='fields')['fields']
+
+
+    field_ids=ms.range(items='field_id')['field_id']
     field_dict=dict( zip( field_ids, fields))
+    mylog.dictprint('Fields',field_dict, format1='d', format2='s')
+
 
     nchans=[]
     rfreqs=[]
@@ -197,7 +238,8 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     spw_lofreqdict=dict( zip( spws, lo_freq ) )
     spw_hifreqdict=dict( zip( spws, hi_freq ) )
 
-
+    mylog.dictprint('SPW Freq dict',spw_freqdict,format2='.3F', 
+                    units='GHz', valueconstant=1e-9 )
     #alma bands:
     almabands={3: [84,116],
                6: [211,275],
@@ -221,13 +263,15 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
     #check that all the spws should be in same band?
     #band=spw_banddict[0]
     if len( set (spw_banddict.values() ))==1:
-        showinfo('All spws in same band', 2)
+        #showinfo('All spws in same band', 2)
         band=spw_banddict.values()[0]
-        showinfo('Band is: '+str(band), 1)
+        #showinfo('Band is: '+str(band), 1)
     else:
         print 'WARNING: NOT ALL SPWS IN SAME BAND!'
         print 'This may represent a programming error by the author...'
         band = spw_banddict
+
+    mylog.info('Band',str(band) )
 
     #get (physical) baselines
     tb=casata.tools.ctools.get("tb")
@@ -245,6 +289,9 @@ def get_vis_info(myvis, spws=[1,3,5,7]):
                                  
     #for moment, return only the max baseline?
     max_baseline=max(baselines)
+    mylog.info('Max Baseline','%.3F'%max_baseline)
+    mylog.message('\n')
+
 
     return (antennas, field_dict, 
             spw_chandict,spw_freqdict, 
@@ -276,27 +323,37 @@ def antpos_to_dict(ant_names, ant_corrs):
     return dict( zip( ant_names, ant_corrs))
     
 
-def  antenna_position_correct(vis, antenna_position_corrections, antpos_caltable):
+def  antenna_position_correct(vis, antenna_position_corrections, antpos_caltable, 
+                              logging=None):
     """
     Read in dictionary of antenna positions, calculate caltable for vis,
     and return the name of the caltable
 
     """
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
 
+    mylog.header('Antenna position correction')
     #get names and corrections as lists
     antenna_names=string_creator(antenna_position_corrections.keys() )
     antenna_corrections=list(np.asarray(antenna_position_corrections.values()).flatten())
+    mylog.dictprint('Ant Corr',antenna_position_corrections)
+
 
     #calculate the calibration table
     gencal(vis=vis, caltable=antpos_caltable, caltype='antpos',
            antenna=antenna_names, parameter=antenna_corrections)
-    
+    mylog.info('Caltable', antpos_caltable)
+    mylog.message('')
+
     #return the name of the position table
     return antpos_caltable
 
 def call_wvrgcal(vis, wvrgcal_table, wvrgcal, field_dict, cal_field, antennas,
-                 **wvrgcal_options
-                 ):
+                 logging=None,
+                 **wvrgcal_options):
     """
     Call a given wvrgcal binary with specified options.
 
@@ -310,7 +367,12 @@ def call_wvrgcal(vis, wvrgcal_table, wvrgcal, field_dict, cal_field, antennas,
     wvrgcal_options: dictionary of keyword options passed to wvrgcal
 
     """
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
 
+    mylog.header('WVRGCAL')
     #if no specific binary given, use the first one in the system path
     if wvrgcal is True:
         wvrgcal='wvrgcal'
@@ -323,16 +385,20 @@ def call_wvrgcal(vis, wvrgcal_table, wvrgcal, field_dict, cal_field, antennas,
     if wvrgcal_options.has_key('stat_cal'):
         wvrgcal_options.pop('stat_cal')
         wvrgcal_options['statsource']=field_dict[cal_field]
-    
+        
     #flag antenna without wvr0? TV?
     #TODDO
 
     #set up wvrgcal
     mywvrgcal = calling_wvrgcal.wvrgcal(wvrgcal)
+    mylog.info('WVRGCAL Version', mywvrgcal.version)
+
     
     #call wvrgcal
     mywvrgcal.call(ms=vis, output=wvrgcal_table, **wvrgcal_options)
-
+    mylog.dictprint('WVRGCAL options', wvrgcal_options, format1='s', format2='s')
+    mylog.info('WVRGCAL caltable', wvrgcal_table)
+    mylog.message('')
     #return the output caltable and the version number
     return wvrgcal_table, mywvrgcal.version
 
@@ -373,24 +439,30 @@ def string_creator(names):
     return tiestring
 
     
-def apriori_flagging(vis, quackinterval=1.5, quackincrement=True):
+def apriori_flagging(vis, quackinterval=1.5, quackincrement=True, logging=None):
 
     """
     Perform apriori flagging that will be carried out on all data.
 
     """
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+    mylog.message('Apriori flagging')
 
     #flag the autocorrelations
     flagautocorr(vis=vis)
-    
+    mylog.message('Autocorrelations were flagged')
     #flag any data that is shadowed
     flagdata(vis=vis, mode='shadow', flagbackup=False)
-
+    mylog.message('Shadowed data was flagged')
     #quack the data
     flagdata(vis=vis, flagbackup=False, mode='quack', 
              quackinterval=quackinterval,
              quackincrement=True)
-
+    mylog.message('Data set was "quacked", with quackincrement='+str(quackincrement)+
+                  ' and quackinterval='+str(quackinterval)+'\n')
 
 
 def flagging_spw_ends(vis, spw_chandict, band, logging=None):
@@ -402,6 +474,10 @@ def flagging_spw_ends(vis, spw_chandict, band, logging=None):
     URGENT!
     
     """
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
 
     if int(band) == 6:
         spw_chans =['*:0~5','*:62~63']
@@ -415,9 +491,8 @@ def flagging_spw_ends(vis, spw_chandict, band, logging=None):
 
     flagdata(vis=vis, flagbackup=False, spw=spw_chans)
     
-    if logging:
-        logging.write('Flagging beginning and end spw channels\n')
-        logging.write('Channel string: '+str(spw_chans)+'\n')
+    mylog.message('Flagging beginning and end spw channels')
+    mylog.message('Channel string: '+str(spw_chans)+'\n')
 
 
 
@@ -438,6 +513,7 @@ def flagging_spw_ends_flagstringcreator(spw_chandict, method='percent', flagrang
     'chosen' will simply return the string given in flagrange
 
     """
+    
     spw_flagging=[]
 
     if method.lower().strip() == 'percent':
@@ -468,6 +544,12 @@ def initial_plots(vis, spws, correlations, root_name,
     Return list of plots produced
 
     """
+
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+
     correlations=string_creator(correlations)
     plot_kwargs=dict( vis=vis, xaxis='channel', yaxis='amp', field='',
                           avgtime='1e8', correlation='XX,YY', coloraxis='corr',
@@ -481,9 +563,9 @@ def initial_plots(vis, spws, correlations, root_name,
         plot_kwargs['spw']=str(spw)
         plotms(**plot_kwargs)
         output_plots.append(filename)
-
-    if logging:
-        logging.plots_created(output_plots)
+    
+    
+    mylog.plots_created('Initial plots after basic flagging', output_plots)
     return output_plots
 
 
@@ -524,23 +606,27 @@ def get_post_split_spw_chandict(spw_chandict):
 def bpp_calibration(vis, bpp_caltable, spw_chandict,
                      cal_field_name, ref_ant, 
                      minsnr=2.0, minblperant=4, solint='60s',
-                     begin_frac=3, end_frac=2):
+                     begin_frac=3, end_frac=2, logging=None):
     """
     calibrate the phases of the bandpass calibrator.
 
     """
-                     
-    print '------ calibrate phases for bandpass calibrator----'
-    
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+        
+    #print '------ calibrate phases for bandpass calibrator----'
+    mylog.message('Calibrate phases for bandpass calibrator')
     
     spw_chanstring=spw_channel_marking_fraction(spw_chandict, begin_frac, 
                                                 end_frac)
-    
-    gaincal(vis=vis, caltable=bpp_caltable, field=cal_field_name,
-            refant=ref_ant, calmode='p', spw=spw_chanstring,
-            minsnr=minsnr, minblperant=minblperant,
-            solint=solint)
-
+    bpp_dictionary=dict(vis=vis, caltable=bpp_caltable, field=cal_field_name,
+                            refant=ref_ant, calmode='p', spw=spw_chanstring,
+                            minsnr=minsnr, minblperant=minblperant, solint=solint)
+    gaincal(**bpp_dictionary)
+    mylog.dictprint('Bpp cal options', bpp_dictionary)
+    mylog.message('\n')
     return bpp_caltable
             
 # def bandpass_calplot(caltable, spw_chandict, figroot, interactive=False, 
@@ -602,7 +688,15 @@ def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
     Plots of caltable
 
     """
-    print '----plotting '+caltable
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+    
+    mylog.message('Plotting images of '+caltable+'\n')
+
+    
+    #print '----plotting '+caltable
 
     plot_file_root=figroot+caltable.split('_')[-1]
     plot_kwargs=dict( caltable=caltable, xaxis='time', iteration='antenna', 
@@ -612,25 +706,27 @@ def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
     plotfiles=[]
 
     if phase:
-        print '-----plotting phase vs '+xaxis
+        #print '-----plotting phase vs '+xaxis
         plot_kwargs['yaxis']='phase'
         yaxis=plot_kwargs['yaxis']
         plot_kwargs['plotrange']=[0,0,-180,180]
         plot_file = plot_file_root+'_'+yaxis+'_vs_'+xaxis
         plotfiles = plotfiles + plotcal_util(plot_kwargs, spw_chandict.keys(),
                                          correlations, plot_file, figext)
+        mylog.plots_created(caltable+': phase vs '+xaxis, plotfiles)
 
     if amp:
-        print '-----plotting amp vs '+xaxis
+        #print '-----plotting amp vs '+xaxis
         plot_kwargs['yaxis']='amp'
         yaxis=plot_kwargs['yaxis']
         plot_kwargs['plotrange']=[]
         plot_file = plot_file_root+'_'+yaxis+'_vs_'+xaxis
         plotfiles = plotfiles + plotcal_util(plot_kwargs, spw_chandict.keys(),
                                              correlations, plot_file, figext)
+        mylog.plots_created(caltable+': amplitude vs '+xaxis, plotfiles)
 
     if snr:
-        print '----- plotting snr vs '+xaxis
+        #print '----- plotting snr vs '+xaxis
         plot_kwargs['yaxis']='snr'
         yaxis=plot_kwargs['yaxis']
         plot_kwargs['plotrange']=[]
@@ -638,9 +734,10 @@ def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
 
         plotfiles = plotfiles + plotcal_util(plot_kwargs, spw_chandict.keys(), 
                                              correlations, plot_file, figext)
+        mylog.plots_created(caltable+': SNR vs '+xaxis, plotfiles)
 
-    if logging:
-        logging.plots_created(plotfiles)
+    #if logging:
+    #    logging.plots_created(plotfiles)
 
     return plotfiles
 
@@ -680,17 +777,29 @@ def bandpass_calibration(vis, unapplied_caltables, bp_caltable, cal_field_name,r
     """perform bandpass calibration
 
     """
+    
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+
+
     print '----BANDPASS CALIBRATION----'
-    bandpass(vis=vis, caltable=bp_caltable,
+    mylog.message('Bandpass Calibration'+'\n')
+
+    bandpass_options=dict(vis=vis, caltable=bp_caltable,
              gaintable=unapplied_caltables,
              field=cal_field_name,
              spw='', combine=combine, solint=solint, minblperant=minblperant, 
              refant=ref_ant,
              solnorm=solnorm)
 
-    if logging:
-        mylogging.write(' Performing band pass calibration\n')
-        #need to write the parametersinto this
+    bandpass(**bandpass_options)
+             
+
+    mylog.dictprint('Bandpass cal options', bandpass_options)
+    mylog.message('\n')
+
     return bp_caltable
 
 def gain_calibration(vis,unapplied_caltables, gc_caltable, gc_amp_caltable, 
@@ -702,25 +811,40 @@ def gain_calibration(vis,unapplied_caltables, gc_caltable, gc_amp_caltable,
     phase, then amp and phase
 
     """
-    print '-----GAIN CALIBRATION----'
-    print '.... phase'
-    gaincal(vis=vis, field=cal_field_name, gaintable=unapplied_caltables, 
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+
+
+    
+    #print '-----GAIN CALIBRATION----'
+    #print '.... phase'
+
+    mylog.message('Gain Calibration'+'\n')
+
+    gcphase_options=dict(vis=vis, field=cal_field_name, gaintable=unapplied_caltables, 
             refant=ref_ant, calmode='p', minsnr=minsnr, minblperant=minblperant, 
             solint=solint, caltable=gc_caltable)
+    gaincal(**gcphase_options)
+
+    mylog.dictprint('Gain Calibration Phase cal', gcphase_options)
 
     unapplied_caltables2=unapplied_caltables[:]
     unapplied_caltables2.append(gc_caltable)
 
-    print '.... amp and phase'
-    gaincal(vis=vis, field=cal_field_name, gaintable=unapplied_caltables2, 
+    #print '.... amp and phase'
+    gcamp_options= dict(vis=vis, field=cal_field_name, gaintable=unapplied_caltables2, 
             refant=ref_ant, calmode='ap', minsnr=minsnr, minblperant=minblperant,
             solint=solint, caltable=gc_amp_caltable)
-
+    gaincal(**gcamp_options)
+    mylog.dictprint('Gain Calibration Amp&Phase cal', gcamp_options)
+    mylog.message('\n')
     
     return gc_caltable, gc_amp_caltable
     
 
-def apply_calibrations_calsep(vis, caltables, field_dict, cal_field):
+def apply_calibrations_calsep(vis, caltables, field_dict, cal_field, logging=None):
 
     """
     Apply the calibrations, using 'nearest' interpolation on the
@@ -728,6 +852,10 @@ def apply_calibrations_calsep(vis, caltables, field_dict, cal_field):
 
     TODO: ensure this works if only one source?
     """
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
 
     #should this be hardcoded?
     #check if right?
@@ -740,26 +868,33 @@ def apply_calibrations_calsep(vis, caltables, field_dict, cal_field):
     #get a list repeating the name of the calibration field for each gain table
     gain_fields=[cal_field_name for i in caltables]
 
-    print '----Applying Calibrations:'
-    print '    '+str(caltables)
-    print '...applying to calibration field'
-    applycal(vis=vis, field=cal_field_name, interp=cal_cal_interp,
+    #print '----Applying Calibrations:'
+    #print '    '+str(caltables)
+    #print '...applying to calibration field'
+    mylog.message('Apply Calibrations')
+
+    applycal_dict=dict(vis=vis, field=cal_field_name, interp=cal_cal_interp,
              gaintable=caltables, gainfield=gain_fields,
              flagbackup=False)
+    
+    applycal(**applycal_dict)
+    mylog.dictprint('Applying calibrations to calibration field', applycal_dict)
 
     science_fields=field_dict.values()[:]
     science_fields.remove(cal_field_name)
 
     if science_fields:
         
-        print '...applying to science fields'
+        #print '...applying to science fields'
         field_list=string_creator(science_fields)
-        applycal(vis=vis, field=field_list,
+        applycal_dict=dict(vis=vis, field=field_list,
                  interp=cal_sci_interp,
                  gaintable=caltables, gainfield=gain_fields,
                  flagbackup=False)
+        applycal(**applycal_dict)
+        mylog.dictprint('Applying calibrations to science fields', applycal_dict)
     
-    
+    mylog.message('\n')
 #TODO: BEST WAY TO THINK about plots? -- what types of plots are
 # needed in general, rather than at what stage of data processing?
 
@@ -767,7 +902,7 @@ def apply_calibrations_calsep(vis, caltables, field_dict, cal_field):
 #useful plots we could be creating.
 def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot, 
                     figext='png',avgtime='1e8',
-                    interactive=False, overwrite=True): 
+                    interactive=False, overwrite=True, logging=None): 
 
     """ Make plots of the corrected data
 
@@ -796,9 +931,14 @@ def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot,
     regardless of what the keyword *interactive* is set to.
     
     """
-    print '---- MAKING PLOTS OF CORRECTED DATA ----'
-
-
+    #print '---- MAKING PLOTS OF CORRECTED DATA ----'
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+    mylog.header('Plots of Calibrated Data', punctuation='=')
+    plot_files=[]
+  
     plotms_kwargs=dict(
         vis = vis,
         xaxis = 'time',
@@ -811,6 +951,7 @@ def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot,
 
     plotms_kwargs['avgchannel']=string_creator(spw_chandict.values())
     plotname=plotroot+'_'+plotms_kwargs['xaxis']+'_vs_'+plotms_kwargs['yaxis']
+
     #amplitude vs time, per spw and per correlation
     for correlation in correlations:
         plotms_kwargs['correlation']=correlation
@@ -819,8 +960,10 @@ def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot,
             plotms_kwargs['plotfile']=plotname+'_spw'+str(spw)+'_'+correlation+'.'+figext
             plotms_kwargs['title']='Amp vs. Time\n'+str(vis)+'\nSPW: '+str(spw)+' Corr: '+correlation
             plotms(**plotms_kwargs)
-
-            print '....'+plotms_kwargs['plotfile']
+            plot_files.append(plotms_kwargs['plotfile'])
+            #print '....'+plotms_kwargs['plotfile']
+    mylog.plots_created('Final data: Amp vs Time', plot_files)
+    plot_files2=[]
 
     #amplitude vs uvdist, one field per plot, colors spw
     plotms_kwargs['xaxis']='uvdist'
@@ -837,9 +980,13 @@ def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot,
             plotms_kwargs['plotfile']=plotname+'_f_'+field+'_'+correlation+'.'+figext
             plotms_kwargs['title']='Amp vs. UVdist\n'+str(vis)+'\nfield: '+field+' Corr: '+correlation
             plotms(**plotms_kwargs)
-            print '....'+plotms_kwargs['plotfile']
+            plot_files2.append(plotms_kwargs['plotfile'])
+            #print '....'+plotms_kwargs['plotfile']
 
-
+    
+    mylog.plots_created('Final corrected data: Amp vs UVdist', plot_files2)
+    return plot_files+plot_files2
+    #end of
 
     
 
@@ -875,9 +1022,14 @@ def make_box_and_mask(im_size, mask_dx, mask_dy=None):
 
 
 def clean_data(vis, pixsize, im_size, mask,  n_iter, field_dict,
-               cleanweighting, cleanspw, cleanmode, root):
-    print '---- CLEANING ----'
-    
+               cleanweighting, cleanspw, cleanmode, root, logging=None):
+    #print '---- CLEANING ----'
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+    mylog.header('Cleaning')
+    plotfiles=[]
     clean_kwargs=dict(vis=vis, cell=pixsize, imsize=im_size,
                       niter = n_iter,
                       stokes = 'IQUV',
@@ -886,20 +1038,23 @@ def clean_data(vis, pixsize, im_size, mask,  n_iter, field_dict,
                       spw = cleanspw,
                       mode = cleanmode,
                       mask = mask)
+    mylog.listprint('Cleaning the fields', field_dict.values())
+    mylog.dictprint('Clean Parameters', clean_kwargs)
 
     imagenames=[]
     for field in field_dict.values():
         clean_kwargs['imagename']=root+'f'+field
         clean_kwargs['field']=field
-        print clean_kwargs
+        #print clean_kwargs
         clean(**clean_kwargs)
         imagenames.append(clean_kwargs['imagename']+'.image')
-
+    mylog.listprint('Cleaned images', imagenames)
+    mylog.message('')
     return imagenames
 
 
 #checked, it seems to work
-def create_fits_images(imagenames):
+def create_fits_images(imagenames, logging=None):
 
     """
     Create fits version of images.
@@ -909,18 +1064,24 @@ def create_fits_images(imagenames):
     Return a list of fits files.
 
     """
-    print '---- EXPORTING FITS (I,Q,U,V) IMAGES ----'
-
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+    #print '---- EXPORTING FITS (I,Q,U,V) IMAGES ----'
+    mylog.header('Output FITS files')
     fitslist=[]
     for imname in imagenames:
         fitsimage=imname+'.fits'
         exportfits(imagename=imname, fitsimage=imname+'.fits')
         fitslist.append(fitsimage)
+    mylog.listprint('FITS (I,Q,U,V) Images', fitslist)
+    mylog.message('\n')
     return fitslist
 
 
 #checked that this works, not checked the detailed results.
-def stats_images(imagenames, bx,logfile=None):
+def stats_images(imagenames, bx,logging=None):
     """
     Function to calculate the statistics on the images.
 
@@ -932,42 +1093,67 @@ def stats_images(imagenames, bx,logfile=None):
     #TODO:
     #CHECK replicates Marcels version, no errors introduced.
     
-    print '---COMPUTING STATS ----'
+    #print '---COMPUTING STATS ----'
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
 
-    if logfile:
-        myfile=open(logfile, 'a')
-        myfile.write('-----------COMPUTING STATS ON IMAGES---------\n')
+    mylog.header(' Stats from the final images')
+    mylog.message('\n')
+    row=['field', 'stokes', 'maxval', 'minval', 'rms', 'omin', 'max_rms']
+    mylog.message('   '.join(row))
     for imname in imagenames:
-        #get stokes I, Q, U and V
         obj = imhead(imname, mode='get', hdkey='object')
-        st = 'I'
-        gstat_I = imstat(imname, stokes=st)
-        bgstat_I = imstat(imname, stokes=st, box=bx)
-        st = 'Q'
-        gstat_Q = imstat(imname, stokes=st)
-        bgstat_Q = imstat(imname, stokes=st, box=bx)
-        st = 'U'
-        gstat_U = imstat(imname, stokes=st)
-        bgstat_U = imstat(imname, stokes=st, box=bx)
-        st = 'V'
-        gstat_V = imstat(imname, stokes=st)
-        bgstat_V = imstat(imname, stokes=st, box=bx)
-        stats_string=str(str(obj['value'])+'\n'
-                         +'ST            MAX               MIN                RMS              OMIN       MAX/RMS\nI  '
-                         +str(gstat_I['max'][0])+'  '+ str(gstat_I['min'][0])+'  '+str(bgstat_I['rms'][0])+'  '+str(bgstat_I['min'][0])+'  '+str(gstat_I['max'][0]/bgstat_I['rms'][0])+'\n'
-                         +'Q  '+str(gstat_Q['max'][0])+'  '+str(gstat_Q['min'][0])+'  '+str(bgstat_Q['rms'][0])+'  '+str(bgstat_Q['min'][0])+'  '+str(gstat_Q['max'][0]/bgstat_Q['rms'][0])+'\n'
-                         +'U  '+str(gstat_U['max'][0])+'  '+str(gstat_U['min'][0])+'  '+str(bgstat_U['rms'][0])+'  '+str(bgstat_U['min'][0])+'  '+str(gstat_U['max'][0]/bgstat_U['rms'][0])+'\n'
-                         +'V  '+str(gstat_V['max'][0])+'  '+str(gstat_V['min'][0])+'  '+str(bgstat_V['rms'][0])+'  '+str(bgstat_V['min'][0])+'  '+str(gstat_V['max'][0]/bgstat_V['rms'][0]))
+        field=obj['value']
+        for stokes in ['I', 'Q', 'U', 'V']:
+            gstat = imstat(imname, stokes=stokes)
+            bgstat=imstat(imname, stokes=stokes, box=bx)
+            maxval=gstat['max'][0]
+            minval=gstat['min'][0]
+            rms=bgstat['rms'][0]
+            omin=bgstat['min'][0]
+            max_rms=bgstat['max'][0]/bgstat['rms'][0]
+            row=[field, stokes, '%.4G'%maxval, '%.4G'%minval, 
+                 '%.4G'%rms, '%.4G'%omin,'%.4G'%max_rms]
+            row=[item for item in row]
+            row_string='   '.join(row)
+            mylog.message(row_string)
+        mylog.message('')
+    mylog.message('\n')
+                            
 
-        print stats_string
+        # #get stokes I, Q, U and V
+        # obj = imhead(imname, mode='get', hdkey='object')
+        # st = 'I'
+        # gstat_I = imstat(imname, stokes=st)
+        # bgstat_I = imstat(imname, stokes=st, box=bx)
+        # st = 'Q'
+        # gstat_Q = imstat(imname, stokes=st)
+        # bgstat_Q = imstat(imname, stokes=st, box=bx)
+        # st = 'U'
+        # gstat_U = imstat(imname, stokes=st)
+        # bgstat_U = imstat(imname, stokes=st, box=bx)
+        # st = 'V'
+        # gstat_V = imstat(imname, stokes=st)
+        # bgstat_V = imstat(imname, stokes=st, box=bx)
+        # stats_row=obj['value']
+        # stats_string=str(str(obj['value'])+'\n'
+        #                  +'ST            MAX               MIN                RMS              OMIN       MAX/RMS\nI  '
+        #                  +str(gstat_I['max'][0])+'  '+ str(gstat_I['min'][0])+'  '+str(bgstat_I['rms'][0])+'  '+str(bgstat_I['min'][0])+'  '+str(gstat_I['max'][0]/bgstat_I['rms'][0])+'\n'
+        #                  +'Q  '+str(gstat_Q['max'][0])+'  '+str(gstat_Q['min'][0])+'  '+str(bgstat_Q['rms'][0])+'  '+str(bgstat_Q['min'][0])+'  '+str(gstat_Q['max'][0]/bgstat_Q['rms'][0])+'\n'
+        #                  +'U  '+str(gstat_U['max'][0])+'  '+str(gstat_U['min'][0])+'  '+str(bgstat_U['rms'][0])+'  '+str(bgstat_U['min'][0])+'  '+str(gstat_U['max'][0]/bgstat_U['rms'][0])+'\n'
+        #                  +'V  '+str(gstat_V['max'][0])+'  '+str(gstat_V['min'][0])+'  '+str(bgstat_V['rms'][0])+'  '+str(bgstat_V['min'][0])+'  '+str(gstat_V['max'][0]/bgstat_V['rms'][0]))
 
-        if logfile:
-            myfile.write(stats_string+'\n')
-    if logfile:
-        myfile.close()
+        # print stats_string
+
+        #if logfile:
+        #    myfile.write(stats_string+'\n')
+    #if logfile:
+    #    myfile.close()
 
 
-def imfit_images(imagenames, mask, logfile=None):
+def imfit_images(imagenames, mask, logging=None):
     """
     Carry out imfit routine on given images, using an imfit box
     specified by *mask* = [x1, y1, x2, y2].  
@@ -976,21 +1162,19 @@ def imfit_images(imagenames, mask, logfile=None):
     optionally append to a logfile specified in *logfile*
     
     """
-    #TODO:
-    #CHeck replicates Marcel's verison
 
-    print '---- RUNNING IMFIT ON STOKES I IMAGES ----'
-    if logfile:
-        myfile.write('\n\n ---- RUNNING IMFIT ON STOKES I IMAGES ----\n')
-
+    #print '---- RUNNING IMFIT ON STOKES I IMAGES ----'
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+    mylog.header('IMFIT: fitting  to STOKES I image')
     #get box values in expected format
     imfitbox=','.join(str(value) for value in mask)
 
     #go through each image
     for imname in imagenames:
-        print imname
-        if logfile:
-            myfile.write(imname+'\n')
+        mylog.message(imname)
 
         #do imfit
         fit_vals = imfit(imname, box=imfitbox, stokes = 'I')
@@ -1009,10 +1193,98 @@ def imfit_images(imagenames, mask, logfile=None):
                          + 'PA: ' + str(round(shp['positionangle']['value'],1)))
 
         
-        print imfit_string
+        mylog.message( imfit_string )
+        mylog.message('')
 
-        if logfile:
-            myfile.write(imfit_string+'\n')
-    if logfile:
-        myfile.close()
+        #if logfile:
+        #    myfile.write(imfit_string+'\n')
+    #if logfile:
+    #    myfile.close()
 
+
+
+
+
+    
+class mylogger(object):
+    
+    def __init__(self, root_name='test', output_file=True, tag=None,console=True, std_logging=None, logfile=None):
+
+        #set up ouput file, unless turned off.
+        if output_file and not logfile:
+            output_file=create_log_file(root_name, mode='w', tag=None)
+            self.output_file=output_file.name
+            output_file.close()
+        elif logfile:
+            self.output_file=logfile
+        else:
+            self.output_file=None
+        
+        #set up logging to console
+        if console:
+            self.toconsole=True
+        else:
+            self.console=None
+
+        #setup standard logging
+        if std_logging:
+            self.std_logging=True
+        else:
+            self.std_logging=None
+            
+            
+    def write(self, thestring):
+        if self.output_file:
+            output_file=open(self.output_file, 'a')
+            output_file.write(thestring+'\n')
+            output_file.close()
+        if self.toconsole:
+            print(thestring)
+        if self.std_logging:
+            logging.info(thestring)
+
+        
+            
+
+    def dictprint(self, intro, dictionary, format1='s', format2='s', units='', valueconstant=None):
+        self.write(':'+intro+':\t')
+        for key in dictionary:
+            value=dictionary[key]
+            if valueconstant:
+                value=value*valueconstant
+            self.write('\t:'+('%'+format1)%key+': '+('%'+format2)%value+' '+units)
+        self.write('')
+
+    def info(self, intro, value):
+        message=':'+intro+':\t'+value
+        self.write(message+'\n')
+
+    def message(self, messagestring):
+        self.write(messagestring+'\n')
+        
+    def listprint(self, intro, thelist, format1='s', units=''):
+        self.write(':'+intro+':\t')
+        for value in thelist:
+            self.write('\t:'+('%'+format1)%value+' '+units)
+        self.write('')
+            
+    def plots_created(self, plot_intro, listofplots):
+        underline=underline_string(plot_intro, punctuation='-')
+        self.write(underline)
+        self.write(plot_intro)
+        self.write(underline+'\n')
+        for plot in listofplots:
+            self.write(plot+'\n')
+            self.write('.. image::\t'+plot+'\n')
+            
+    def header(self, name, punctuation='-'):
+        underline=underline_string(name, punctuation=punctuation)
+        self.write(underline)
+        self.write(name)
+        self.write(underline+'\n')
+
+
+def underline_string(mystring, punctuation='='):
+    length=len(mystring)
+
+    return punctuation*length
