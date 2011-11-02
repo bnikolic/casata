@@ -704,29 +704,31 @@ def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
 def plotcal_util(plot_kwargs, spws, correlations, plot_file_root, figext):
     """
     Utility for creating plotcal figures for each spw and each correlation given.
+    
+    Trying plotting both correlations on one plot
 
     """
     plotfiles=[]
     for spw in spws:
         plot_kwargs['spw']=str(spw)
         plot_file=plot_file_root+'_spw'+str(spw)
-        for poln in correlations:
-            plot_kwargs['poln']=poln
-            plot_kwargs['figfile']=''
-            figfile=plot_file+'.'+poln+'.'+figext
-            plotcal(**plot_kwargs)
-            fig=plt.gcf()
-            for ax in fig.axes:
-                title=ax.get_title()
-                new_title=title.split('Antenna=')[1].replace("'","")
-                ax.set_title(new_title,fontsize=7)
-                if plot_kwargs['xaxis']=='time':
-                    mlines=ax.lines[0]
+        #for poln in correlations:
+        plot_kwargs['poln']='RL'
+        plot_kwargs['figfile']=''
+        figfile=plot_file+'.'+figext
+        plotcal(**plot_kwargs)
+        fig=plt.gcf()
+        for ax in fig.axes:
+            title=ax.get_title()
+            new_title=title.split('Antenna=')[1].replace("'","")
+            ax.set_title(new_title,fontsize=7)
+            if plot_kwargs['xaxis']=='time':
+                for mlines in ax.lines:
                     mlines.set_linestyle('solid')
                     mlines.set_linewidth(0.5)
-            plt.draw()
-            fig.savefig(figfile, bbox_inches='tight', pad_inches=0.2)
-            plotfiles.append(figfile)
+        plt.draw()
+        fig.savefig(figfile, bbox_inches='tight', pad_inches=0.2)
+        plotfiles.append(figfile)
     return plotfiles
     
 
@@ -1250,3 +1252,38 @@ def underline_string(mystring, punctuation='='):
     length=len(mystring)
 
     return punctuation*length
+
+
+
+def sphinx_files(logfile, imagepattern, tablepattern, ms_name, 
+                 sphinxpath, quasar_number):
+    """
+    Copy the .rst logfile, any images matching the specified pattern,
+    any tables matching the specified pattern into a directory named
+    after the ms, and located in the sphinx path
+
+    """
+
+    #get the path for the number of quasars
+    quasar_dir=str(int(quasar_number))+'quasar'
+        
+    #get the name of direcotry to store results for this measurement
+    #set, and create it if it doesn't already exist
+    resultsdir = os.join(sphinxpath, quasar_dir, ms_name+'_resultsdir')
+    if not os.path.isdir(resultsdir):
+        os.mkdir(resultsdir)
+
+    #copy files into that directory
+    os.copy(logfile, resultsdir)
+    for thefile in os.listdir('.'):
+        if imagepattern:
+            if fnmatch.fnmatch(thefile, imagepattern):
+                os.copy(thefile, resultsdir)
+        if tablepattern:
+            if fnmatch.fnmatch(thefile, tablepattern):
+                os.copy(thefile, resultsdir)
+
+
+    if tablepattern:
+
+        
