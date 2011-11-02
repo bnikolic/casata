@@ -7,6 +7,7 @@ import numpy as np
 import calling_wvrgcal
 import logging
 import time
+import datetime
 
 def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
                    control='complete', wvrgcal_options=None, antpos_corr=None, 
@@ -40,7 +41,9 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     
     """
     starttime_s=time.time()
-    starttime_clock=time.ctime()
+    starttime_clock=datetime.datetime.now()
+    timestamp=starttime_clock.strftime('%Y-%m-%d_%H:%M:%S')
+
     #control flow of quasar script
     if control=='complete':
          initial_calibrations=True
@@ -92,20 +95,44 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
             
 
     #ms names
-    root_name = os.path.split( os.path.splitext(vis)[0] )[1]
+    root_name = os.path.split( os.path.splitext(vis.rstrip('/'))[0] )[1]
+    print root_name
+    file_root = root_name #base name of file
+    #now include timestamp in basic name
+    root_name=root_name+timestamp
     split1=root_name+'_split1.ms'
     split2=root_name+'_cont.ms'
     #setup the logfile
+    if not logfile:
+        logfile=root_name+'.rst'
+
     mylog=mylogger(root_name=root_name, output_file=True, console=True, logfile=logfile)
 
-    mylog.header(root_name, punctuation='=')
+    #intial title of page
+    if do_wvrgcal:
+        mywvrgcal=calling_wvrgcal.wvrgcal(wvrgcal)
+        ver=mywvrgcal.version()
+        wvrhead='WVRGCAL ver. '+ver+' wvroptions:'
+        mystr=''
+        for key in wvrgcal_options:
+            mystr+=key+'='+str(wvrgcal_options[key])+' '
+        wvrhead+=' '+mystr
+    else:
+        wvrhead='no wvrgcal'
+        
+
+    runtitle=str(file_root+' '+timestamp+'    '+wvrhead+'    CONTROL: '+str(control))
+
+    mylog.header(runtitle, punctuation='#')
     mylog.message('quasar_reduction is being performed\n')
     optdict=dict(vis=vis, spws=[1,3,5,7], user_flagging_script=user_flagging_script,
                    control=control, wvrgcal_options=wvrgcal_options, 
                    antpos_corr=antpos_corr, 
-                   cal_field=cal_field, ref_ant=ref_ant, logfile=logfile)
+                   cal_field=cal_field, ref_ant=ref_ant, logfile=logfile, n_iter=n_iter)
+
     mylog.dictprint('Options called', optdict)
-    mylog.info('Reduction began at', starttime_clock)
+    mylog.info('Reduction began at', starttime_clock.strftime('%c'))
+    mylog.info('root name for files', root_name)
 
     #always do: setup names, parameters and get basic info
     #get basic info from data set
@@ -245,7 +272,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         gc_caltable, gc_amp_caltable=gain_calibration(split1, unapplied_caltables[:], 
                                              gc_caltable, gc_amp_caltable,
                                              field_dict[cal_field],
-                                             ref_ant)
+                                             ref_ant, logging=mylog)
         unapplied_caltables.append(gc_caltable)
         unapplied_caltables.append(gc_amp_caltable)
         caltable_plot(gc_caltable, spw_chandict, root_name, phase=True, snr=True, 
@@ -300,6 +327,18 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     finishtime_clock=time.ctime()
     mylog.info('Finished at', finishtime_clock)
     mylog.info('Took', '%.1F'%((finishtime_s-starttime_s)/60.0)+' minutes')
+
+
+    #copy .rst file and .png files into sphinx.
+    #First check if directory with root_name exists:
+    #resultsdir=os.join(sphinx_path, number_quasar_name, file_root)
+    #if not os.path.isdir(resultsdir):
+    #    os.mkdir(resultsdir)
+
+    #now check that there are no files with current root name+time:
+    
+
+    
     #TODO: delete files -- need to keep track of what has been created
     #so it can be deleted...  don't want to delete too much while its
     #running, to allow us to go back to extra flagging stage and run

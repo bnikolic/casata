@@ -628,55 +628,6 @@ def bpp_calibration(vis, bpp_caltable, spw_chandict,
     mylog.dictprint('Bpp cal options', bpp_dictionary)
     mylog.message('\n')
     return bpp_caltable
-            
-# def bandpass_calplot(caltable, spw_chandict, figroot, interactive=False, 
-#                      figext='png',
-#                      logging=None):
-#     """
-#     Plots of phase and amp vs channel, to check the bandpass calibrator
-
-#     """
-#     print '---- plotting phase vs channel '+caltable
-    
-#     plot_file_root=figroot+caltable.split('_')[-1]
-#     plot_kwargs=dict( caltable=caltable, xaxis='chan', yaxis='phase',
-#                       iteration='antenna', 
-#                       showgui=interactive, subplot=551, plotrange=[0,0,-180,180],
-#                       plotsymbol=',', fontsize=7)
-#     plotfiles=[]
-#     for spw in spw_chandict.keys():
-#         plot_kwargs['spw']=str(spw)
-#         figname=plot_file_root+'_phase_vs_channel_spw'+str(spw)
-#         plot_kwargs['figfile']=figname+'.'+figext
-#         plotcal(**plot_kwargs)
-#         fig=plt.gcf()
-#         for ax in fig.axes:
-#             title=ax.get_title()
-#             new_title=title.split('Antenna=')[1].replace("'","")
-#             ax.set_title(new_title,fontsize=7)
-#         plt.draw()
-#         fig.savefig(plot_kwargs['figfile'], bbox_inches='tight', pad_inches=0.2)
-#         plotfiles.append(plot_kwargs['figfile'])
-        
-        
-#     print '---- plotting amp vs channel '+caltable
-#     plot_kwargs['yaxis']='amp'
-#     plot_kwargs['plotrange']=[]
-#     for spw in spw_chandict.keys():
-#         plot_kwargs['spw']=str(spw)
-#         figname=plot_file_root+'_amp_vs_channel_spw'+str(spw)
-#         plot_kwargs['figfile']=figname+'.'+figext
-#         plotcal(**plot_kwargs)
-#         fig=plt.gcf()
-#         for ax in fig.axes:
-#             title=ax.get_title()
-#             new_title=title.split('Antenna=')[1].replace("'","")
-#             ax.set_title(new_title, fontsize=7)
-#         plt.draw()
-#         fig.savefig(plot_kwargs['figfile'], bbox_inches='tight', pad_inches=0.2)
-#         plotfiles.append(plot_kwargs['figfile'])
-
-#     return plotfiles
 
 
 def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
@@ -714,6 +665,7 @@ def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
         plotfiles = plotfiles + plotcal_util(plot_kwargs, spw_chandict.keys(),
                                          correlations, plot_file, figext)
         mylog.plots_created(caltable+': phase vs '+xaxis, plotfiles)
+        plotfiles=[]
 
     if amp:
         #print '-----plotting amp vs '+xaxis
@@ -724,6 +676,7 @@ def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
         plotfiles = plotfiles + plotcal_util(plot_kwargs, spw_chandict.keys(),
                                              correlations, plot_file, figext)
         mylog.plots_created(caltable+': amplitude vs '+xaxis, plotfiles)
+        plotfiles=[]
 
     if snr:
         #print '----- plotting snr vs '+xaxis
@@ -735,11 +688,9 @@ def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
         plotfiles = plotfiles + plotcal_util(plot_kwargs, spw_chandict.keys(), 
                                              correlations, plot_file, figext)
         mylog.plots_created(caltable+': SNR vs '+xaxis, plotfiles)
+        plotfiles=[]
 
-    #if logging:
-    #    logging.plots_created(plotfiles)
-
-    return plotfiles
+    #return plotfiles
 
 def plotcal_util(plot_kwargs, spws, correlations, plot_file_root, figext):
     """
@@ -785,7 +736,7 @@ def bandpass_calibration(vis, unapplied_caltables, bp_caltable, cal_field_name,r
 
 
     print '----BANDPASS CALIBRATION----'
-    mylog.message('Bandpass Calibration'+'\n')
+    mylog.header('Bandpass Calibration', punctuation='-')
 
     bandpass_options=dict(vis=vis, caltable=bp_caltable,
              gaintable=unapplied_caltables,
@@ -821,7 +772,7 @@ def gain_calibration(vis,unapplied_caltables, gc_caltable, gc_amp_caltable,
     #print '-----GAIN CALIBRATION----'
     #print '.... phase'
 
-    mylog.message('Gain Calibration'+'\n')
+    mylog.header('Gain Calibration', punctuation='-')
 
     gcphase_options=dict(vis=vis, field=cal_field_name, gaintable=unapplied_caltables, 
             refant=ref_ant, calmode='p', minsnr=minsnr, minblperant=minblperant, 
@@ -871,7 +822,7 @@ def apply_calibrations_calsep(vis, caltables, field_dict, cal_field, logging=Non
     #print '----Applying Calibrations:'
     #print '    '+str(caltables)
     #print '...applying to calibration field'
-    mylog.message('Apply Calibrations')
+    mylog.header('Apply Calibrations', punctuation='-')
 
     applycal_dict=dict(vis=vis, field=cal_field_name, interp=cal_cal_interp,
              gaintable=caltables, gainfield=gain_fields,
@@ -1208,14 +1159,15 @@ def imfit_images(imagenames, mask, logging=None):
     
 class mylogger(object):
     
-    def __init__(self, root_name='test', output_file=True, tag=None,console=True, std_logging=None, logfile=None):
+    def __init__(self, root_name='test', output_file=True, tag=None,
+                 console=True, std_logging=None, logfile=None):
 
         #set up ouput file, unless turned off.
         if output_file and not logfile:
             output_file=create_log_file(root_name, mode='w', tag=None)
             self.output_file=output_file.name
             output_file.close()
-        elif logfile:
+        elif output_file and logfile:
             self.output_file=logfile
         else:
             self.output_file=None
@@ -1269,7 +1221,7 @@ class mylogger(object):
         self.write('')
             
     def plots_created(self, plot_intro, listofplots):
-        underline=underline_string(plot_intro, punctuation='-')
+        underline=underline_string(plot_intro, punctuation='.')
         self.write(underline)
         self.write(plot_intro)
         self.write(underline+'\n')
