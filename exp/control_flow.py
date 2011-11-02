@@ -278,7 +278,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         caltable_plot(gc_caltable, spw_chandict, root_name, phase=True, snr=True, 
                       logging=mylog)
         caltable_plot(gc_amp_caltable, spw_chandict, root_name, phase=True, amp=True,
-                      snr=True, logging=mylog)
+                      snr=True, logging=mylog, phase_range=[])
 
         #apply calibrations, slightly differently for cal_field and regular
         apply_calibrations_calsep(split1, unapplied_caltables, field_dict, cal_field)

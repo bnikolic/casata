@@ -62,7 +62,7 @@ def showinfo(message, level):
 # or one channel? from corresponding real spectral windows.
 
 
-#write shorter versions of the stuff inside get_vis_info...
+#write shorter versions of the stuff inside get_visinfo...
 def get_antenna_names(vis):
     """
     get the antennas listed within a measurement set.
@@ -240,6 +240,7 @@ def get_vis_info(myvis, spws=[1,3,5,7], logging=None ):
 
     mylog.dictprint('SPW Freq dict',spw_freqdict,format2='.3F', 
                     units='GHz', valueconstant=1e-9 )
+    mylog.dictprint('SPW Chan dict', spw_chandict)
     #alma bands:
     almabands={3: [84,116],
                6: [211,275],
@@ -479,16 +480,24 @@ def flagging_spw_ends(vis, spw_chandict, band, logging=None):
     else:
         mylog=logging
 
-    if int(band) == 6:
-        spw_chans =['*:0~5','*:62~63']
-        spw_chans=['*:0~3']
-    elif int(band) == 3:
-        #flag first 7 channels
-        spw_chans =['*:0~6']
+    # if int(band) == 6:
+    #     spw_chans =['*:0~5','*:62~63']
+    #     spw_chans=['*:0~3']
+    # elif int(band) == 3:
+    #     #flag first 7 channels
+    #     spw_chans =['*:0~6']
         
-    elif int(band) == 9 and spw_chandict.keys()==[0,1,2,3]:
-        spw_chans = string_creator(['0:0~7', '1:0~11', '2:0~19', '3:0~13;59~60;63'])
+    # elif int(band) == 9 and spw_chandict.keys()==[0,1,2,3]:
+    #     spw_chans = string_creator(['0:0~7', '1:0~11', '2:0~19', '3:0~13;59~60;63'])
 
+    #do first and last 10%?
+    spw_chans=flagging_spw_ends_flagstringcreator(spw_chandict, method='percent',
+                                                  flagrange=10)
+
+    #if band 9, do 20%?
+    if int(band) == 9:
+        spw_chans = flagging_spw_ends_flagstringcreator(spw_chandict, method='percent',
+                                                  flagrange=20)
     flagdata(vis=vis, flagbackup=False, spw=spw_chans)
     
     mylog.message('Flagging beginning and end spw channels')
@@ -634,7 +643,7 @@ def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
                   phase=None, amp=None, snr=None, 
                   interactive=False,
                   figext='png', correlations=['X','Y'],
-                  logging=None):
+                  logging=None, phase_range=[0,0,-180,180]):
     """
     Plots of caltable
 
@@ -660,7 +669,7 @@ def caltable_plot(caltable,spw_chandict, figroot, xaxis='time',
         #print '-----plotting phase vs '+xaxis
         plot_kwargs['yaxis']='phase'
         yaxis=plot_kwargs['yaxis']
-        plot_kwargs['plotrange']=[0,0,-180,180]
+        plot_kwargs['plotrange']=phase_range
         plot_file = plot_file_root+'_'+yaxis+'_vs_'+xaxis
         plotfiles = plotfiles + plotcal_util(plot_kwargs, spw_chandict.keys(),
                                          correlations, plot_file, figext)
@@ -703,7 +712,8 @@ def plotcal_util(plot_kwargs, spws, correlations, plot_file_root, figext):
         plot_file=plot_file_root+'_spw'+str(spw)
         for poln in correlations:
             plot_kwargs['poln']=poln
-            plot_kwargs['figfile']=plot_file+'.'+poln+'.'+figext
+            plot_kwargs['figfile']=''
+            figfile=plot_file+'.'+poln+'.'+figext
             plotcal(**plot_kwargs)
             fig=plt.gcf()
             for ax in fig.axes:
@@ -715,8 +725,8 @@ def plotcal_util(plot_kwargs, spws, correlations, plot_file_root, figext):
                     mlines.set_linestyle('solid')
                     mlines.set_linewidth(0.5)
             plt.draw()
-            fig.savefig(plot_kwargs['figfile'], bbox_inches='tight', pad_inches=0.2)
-            plotfiles.append(plot_kwargs['figfile'])
+            fig.savefig(figfile, bbox_inches='tight', pad_inches=0.2)
+            plotfiles.append(figfile)
     return plotfiles
     
 
