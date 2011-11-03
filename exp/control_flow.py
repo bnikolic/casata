@@ -9,6 +9,8 @@ import logging
 import time
 import datetime
 
+__version__='VerNotSet'
+
 def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
                    control='complete', wvrgcal_options=None, antpos_corr=None, 
                      cal_field=0, ref_ant='DV02', logfile=None, n_iter=100, 
@@ -115,12 +117,16 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         mywvrgcal=calling_wvrgcal.wvrgcal(wvrgcal)
         ver=mywvrgcal.version()
         wvrhead='WVRGCAL ver. '+ver+' wvroptions:'
+        wvr_string='WVR: '+ver
         mystr=''
         for key in wvrgcal_options:
             mystr+=key+'='+str(wvrgcal_options[key])+' '
         wvrhead+=' '+mystr
+        wvr_opt_string=mystr
     else:
         wvrhead='No WVRGCAL'
+        wvr_string=''
+        wvr_opt_string=''
         
 
     runtitle=file_root+' '+timestamp+' '+wvrhead+' control: '+str(control)
@@ -134,6 +140,11 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
                    antpos_corr=antpos_corr, 
                    cal_field=cal_field, ref_ant=ref_ant, logfile=logfile, n_iter=n_iter)
 
+    quasar_reduction_version=__version__
+    quasar_reduction_opt_string=''
+    for key in optdict:
+        quasar_reduction_opt_string+=key+'='+str(optdict[key])+' '
+        
     mylog.dictprint('Options called', optdict)
     mylog.info('Reduction began at', starttime_clock.strftime('%c'))
     mylog.info('root name for files', root_name)
@@ -317,7 +328,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         #TODO: test this function
         imagenames=clean_data(split2, pixsize, im_size, mask, n_iter, field_dict,
                               cleanweighting, cleanspw, cleanmode, root_name, logging=mylog)
-
+        get_restoring_beam(imagenames, logging=mylog)
         #make fits images:
         fitsimages=create_fits_images(imagenames, logging=mylog)
 

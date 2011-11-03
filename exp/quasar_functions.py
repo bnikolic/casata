@@ -1048,7 +1048,7 @@ def create_fits_images(imagenames, logging=None):
 
 
 #checked that this works, not checked the detailed results.
-def stats_images(imagenames, bx,logging=None):
+def stats_images(imagenames, bx,logging=None, options_call=None):
     """
     Function to calculate the statistics on the images.
 
@@ -1066,6 +1066,7 @@ def stats_images(imagenames, bx,logging=None):
     else:
         mylog=logging
 
+    csv_output=[]
     mylog.header(' Stats from the final images')
     mylog.message('\n')
     row=['field', 'stokes', 'maxval', 'minval', 'rms', 'omin', 'max_rms']
@@ -1089,35 +1090,6 @@ def stats_images(imagenames, bx,logging=None):
         mylog.message('')
     mylog.message('\n')
                             
-
-        # #get stokes I, Q, U and V
-        # obj = imhead(imname, mode='get', hdkey='object')
-        # st = 'I'
-        # gstat_I = imstat(imname, stokes=st)
-        # bgstat_I = imstat(imname, stokes=st, box=bx)
-        # st = 'Q'
-        # gstat_Q = imstat(imname, stokes=st)
-        # bgstat_Q = imstat(imname, stokes=st, box=bx)
-        # st = 'U'
-        # gstat_U = imstat(imname, stokes=st)
-        # bgstat_U = imstat(imname, stokes=st, box=bx)
-        # st = 'V'
-        # gstat_V = imstat(imname, stokes=st)
-        # bgstat_V = imstat(imname, stokes=st, box=bx)
-        # stats_row=obj['value']
-        # stats_string=str(str(obj['value'])+'\n'
-        #                  +'ST            MAX               MIN                RMS              OMIN       MAX/RMS\nI  '
-        #                  +str(gstat_I['max'][0])+'  '+ str(gstat_I['min'][0])+'  '+str(bgstat_I['rms'][0])+'  '+str(bgstat_I['min'][0])+'  '+str(gstat_I['max'][0]/bgstat_I['rms'][0])+'\n'
-        #                  +'Q  '+str(gstat_Q['max'][0])+'  '+str(gstat_Q['min'][0])+'  '+str(bgstat_Q['rms'][0])+'  '+str(bgstat_Q['min'][0])+'  '+str(gstat_Q['max'][0]/bgstat_Q['rms'][0])+'\n'
-        #                  +'U  '+str(gstat_U['max'][0])+'  '+str(gstat_U['min'][0])+'  '+str(bgstat_U['rms'][0])+'  '+str(bgstat_U['min'][0])+'  '+str(gstat_U['max'][0]/bgstat_U['rms'][0])+'\n'
-        #                  +'V  '+str(gstat_V['max'][0])+'  '+str(gstat_V['min'][0])+'  '+str(bgstat_V['rms'][0])+'  '+str(bgstat_V['min'][0])+'  '+str(gstat_V['max'][0]/bgstat_V['rms'][0]))
-
-        # print stats_string
-
-        #if logfile:
-        #    myfile.write(stats_string+'\n')
-    #if logfile:
-    #    myfile.close()
 
 
 def imfit_images(imagenames, mask, logging=None):
@@ -1334,3 +1306,25 @@ def cleanup_files(pattern):
                 except OSError:
                     print 'Could not remove '+thefile
                 
+
+def get_restoring_beam(images, logging=None):
+    """
+    Get the beam size from the image headers.
+    prints the beammajor, beamminor and beampa to log.
+
+    """
+    if not logging:
+        mylog=mylogger(output_file=None, console=True)
+    else:
+        mylog=logging
+
+    mylog.header('Beam Info from images')
+    
+    for image in images:
+        imlist=imhead(imagename=image, mode='list')
+        beammajor=imlist['beammajor']
+        beamminor=imlist['beamminor']
+        beampa=imlist['beampa']
+        mylog.dictprint(image,{'Major':beammajor, 'Minor':beamminor,'PA':beampa})
+        
+    
