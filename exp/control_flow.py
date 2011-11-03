@@ -12,7 +12,8 @@ import datetime
 def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
                    control='complete', wvrgcal_options=None, antpos_corr=None, 
                      cal_field=0, ref_ant='DV02', logfile=None, n_iter=100, 
-                     make_html=None, clean_files=None):
+                     make_html=None, clean_files=None, 
+                     sphinx_path='/data/sfg30/WVR/quasar_runs/'):
 
     """
     Function to reduce 4 (and 1?) quasar data sets
@@ -335,10 +336,10 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     quasar_number=len(field_dict.keys())
     imagepattern=root_name+'*'+figext
     tablepattern=None
-    sphinxpath='/data/sfg30/WVR/quasar_runs'
+
     if mylog.output_file:
         sphinx_files(mylog.output_file, imagepattern, tablepattern, file_root,
-                     sphinxpath, quasar_number, make_html)
+                     sphinxpath, quasar_number, make_html=make_html)
 
     #TODO: delete files -- need to keep track of what has been created
     #so it can be deleted...  don't want to delete too much while its
