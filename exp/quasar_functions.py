@@ -1310,9 +1310,11 @@ def sphinx_files(logfile, imagepattern, tablepattern, ms_name,
     os.environ['PATH']=':'.join(newpath)
     cwd=os.getcwd()
     os.chdir(sphinxpath)
-    ret=subprocess.call('make html', shell=True)
-    if ret !=0:
-        print 'Could not make sphinx html automatically'
+
+    if make_html:
+        ret=subprocess.call('make html', shell=True)
+        if ret !=0:
+            print 'Could not make sphinx html automatically'
     os.environ['PYTHONPATH']=oldpythonpath
     os.environ['PATH']=oldpath
     os.chdir(cwd)
