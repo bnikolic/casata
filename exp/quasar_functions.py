@@ -1071,10 +1071,10 @@ def stats_images(imagenames, bx,logging=None, options_call=None):
 
     csv_output=[]
     mylog.header(' Stats from the final images')
-    mylog.message('\n')
+    #mylog.message('\n')
     row=['field', 'stokes', 'maxval', 'minval', 'rms', 'omin', 'max_rms']
     csv_output.append(row)
-    mylog.message('   '.join(row))
+    #mylog.message('   '.join(row))
     for imname in imagenames:
         obj = imhead(imname, mode='get', hdkey='object')
         field=obj['value']
@@ -1091,9 +1091,9 @@ def stats_images(imagenames, bx,logging=None, options_call=None):
             row=[item for item in row]
             csv_output.append(row)
             row_string='   '.join(row)
-            mylog.message(row_string)
-        mylog.message('')
-    mylog.message('\n')
+            #mylog.message(row_string)
+        #mylog.message('')
+    #mylog.message('\n')
     return csv_output
     
 def add_full_run_information_to_table(csv_list, ms_name, wvr_string, wvr_opt_string, quasar_reduction_version, quasar_reduction_opt_string):
@@ -1148,7 +1148,9 @@ def imfit_images(imagenames, mask, logging=None):
     #go through each image
     for imname in imagenames:
         mylog.message(imname)
-
+        #get field name
+        obj=imhead(imname, mode='get', hdkey='object')
+        field=obj['value']
         #do imfit
         fit_vals = imfit(imname, box=imfitbox, stokes = 'I')
 
@@ -1172,12 +1174,12 @@ def imfit_images(imagenames, mask, logging=None):
                          +' +/- '+str(round(shp['minoraxiserror']['value'],4)) +'\n'
                          + 'PA: ' + str(round(shp['positionangle']['value'],1)))
 
-        row=[imname, flux, flux_err, maj_fwhm, maj_fwhm_err, min_fwhm, min_fwhm_err,
+        row=[field, flux, flux_err, maj_fwhm, maj_fwhm_err, min_fwhm, min_fwhm_err,
              pa]
-        mylog.message( imfit_string )
-        mylog.message('')
-        mylog.listprint('imfit values',row)
-        mylog.message('')
+        #mylog.message( imfit_string )
+        #mylog.message('')
+        #mylog.listprint('imfit values',row)
+        #mylog.message('')
         csv_output.append(row)
         
     return csv_output

@@ -9,7 +9,7 @@ import logging
 import time
 import datetime
 
-__version__='VerNotSet'
+__version__='0.1'
 
 #exec(os.popen("bzr version-info --format=python").read())
 #__version__='%(revno)'%version_info
@@ -349,6 +349,10 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         stats_csv=stats_images(imagenames, bx, logging=mylog)
         imfit_csv=imfit_images(imagenames, mask, logging=mylog)
 
+        #write out short stats csv file
+        #write_out_csv_file(stats_csv, stats_csv_name_short)
+        #write_out_csv_file(imfit_csv, imfit_csv_name_short)
+        
         #add on full information to stats tables
         stats_csv=add_full_run_information_to_table(stats_csv, file_root, 
                      wvr_string, wvr_opt_string, 
@@ -357,19 +361,21 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
                      wvr_string, wvr_opt_string, 
                  quasar_reduction_version, quasar_reduction_opt_string)
         
-        #write out stats tables
+        #write out full stats tables
         write_out_csv_file(stats_csv, stats_csv_name)
         write_out_csv_file(imfit_csv, imfit_csv_name)
 
-        #now add to the logfile
+        #now add  logfile
+        mylog.header('STATS of Images')
         mylog.message('')
-        mylog.message('.. csv-table:: STATS')
-        mylog.message('    :header-rows: 1')
-        mylog.message('    :file: '+stats_csv_name)
+        mylog.write('.. csv-table:: STATS')
+        mylog.write('    :header-rows: 1')
+        mylog.write('    :file: '+stats_csv_name)
         mylog.message('')
-        mylog.message('.. csv-table::IMFIT on STOKES I')
-        mylog.message('    :header-rows: 1')
-        mylog.message('    :file: '+imfit_csv_name)
+        mylog.message('')
+        mylog.write('.. csv-table:: IMFIT on STOKES I')
+        mylog.write('    :header-rows: 1')
+        mylog.write('    :file: '+imfit_csv_name)
         mylog.message('')
     
     finishtime_s=time.time()
