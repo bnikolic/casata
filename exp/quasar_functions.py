@@ -501,7 +501,7 @@ def flagging_spw_ends(vis, spw_chandict, band, logging=None):
     #if band 9, do 20%?
     if int(band) == 9:
         spw_chans = flagging_spw_ends_flagstringcreator(spw_chandict, method='percent',
-                                                  flagrange=20)
+                                                  flagrange=15)
     flagdata(vis=vis, flagbackup=False, spw=spw_chans)
     
     mylog.message('Flagging beginning and end spw channels')
@@ -1260,7 +1260,7 @@ def underline_string(mystring, punctuation='='):
 
 
 def sphinx_files(logfile, imagepattern, tablepattern, ms_name, 
-                 sphinxpath, quasar_number):
+                 sphinx_path, quasar_number, make_html=None):
     """
     Copy the .rst logfile, any images matching the specified pattern,
     any tables matching the specified pattern into a directory named
@@ -1273,7 +1273,7 @@ def sphinx_files(logfile, imagepattern, tablepattern, ms_name,
         
     #get the name of direcotry to store results for this measurement
     #set, and create it if it doesn't already exist
-    resultsdir = os.path.join(sphinxpath, quasar_dir, ms_name+'_resultsdir')
+    resultsdir = os.path.join(sphinx_path, quasar_dir, ms_name+'_resultsdir')
     if not os.path.isdir(resultsdir):
         os.mkdir(resultsdir)
 
@@ -1309,7 +1309,7 @@ def sphinx_files(logfile, imagepattern, tablepattern, ms_name,
     newpath.pop(0)
     os.environ['PATH']=':'.join(newpath)
     cwd=os.getcwd()
-    os.chdir(sphinxpath)
+    os.chdir(sphinx_path)
 
     if make_html:
         ret=subprocess.call('make html', shell=True)
@@ -1328,7 +1328,7 @@ def cleanup_files(pattern):
                     shutil.rmtree(thefile)
                 except OSError:
                     print 'Could not remove '+thefile
-            elif os.path.isfile(thefile):
+            elif os.path.isfile(thefile) and not fnmatch.fnmatch(thefile, '*.fits'):
                 try:
                     os.remove(thefile)
                 except OSError:

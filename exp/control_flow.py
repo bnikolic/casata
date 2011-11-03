@@ -339,7 +339,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
 
     if mylog.output_file:
         sphinx_files(mylog.output_file, imagepattern, tablepattern, file_root,
-                     sphinxpath, quasar_number, make_html=make_html)
+                     sphinx_path, quasar_number, make_html=make_html)
 
     #TODO: delete files -- need to keep track of what has been created
     #so it can be deleted...  don't want to delete too much while its
