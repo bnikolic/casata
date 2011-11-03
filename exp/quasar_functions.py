@@ -1096,6 +1096,31 @@ def stats_images(imagenames, bx,logging=None, options_call=None):
     mylog.message('\n')
     return csv_output
     
+def add_full_run_information_to_table(csv_list, ms_name, wvr_string, wvr_opt_string, quasar_reduction_version, quasar_reduction_opt_string):
+
+    """
+    for a list of table rows, attach the ms_name to the beginning of
+    each row, and the wvr & quasar_reduction versions and options to
+    the end of each row.
+
+    """
+    csv_output=[]
+    headers=csv_list[0]
+    headers.insert(0, 'MS_NAME')
+    headers.append('WVR_VERSION')
+    headers.append('WVR_OPTIONS')
+    headers.append('QRED_VERSION')
+    headers.append('QRED_OPTIONS')
+    csv_output.append(headers)
+    for row in csv_list[1:]:
+        row.insert(0, ms_name)
+        row.append(wvr_string)
+        row.append(wvr_opt_string)
+        row.append(quasar_reduction_version)
+        row.append(quasar_reduction_opt_string)
+        csv_output.append(row)
+    return csv_output
+        
 
 def imfit_images(imagenames, mask, logging=None):
     """
@@ -1112,7 +1137,11 @@ def imfit_images(imagenames, mask, logging=None):
         mylog=mylogger(output_file=None, console=True)
     else:
         mylog=logging
+
+    csv_output=[]
     mylog.header('IMFIT: fitting  to STOKES I image')
+    csv_output.append(['IMAGENAME', 'FLUX','FLUX_ERR', 'MAJ_FWHM', 'MAJ_FWHM_ERR',
+                      'MIN_FWHM', 'MIN_FWHLM_ERR','PA'])
     #get box values in expected format
     imfitbox=','.join(str(value) for value in mask)
 
@@ -1128,6 +1157,13 @@ def imfit_images(imagenames, mask, logging=None):
         shp = fit_vals['results']['component0']['shape']
 
         #get the values and print to screen and logfile (if requested)
+        flux=str(round(flx['value'][0],4))
+        flux_err=str(round(flx['error'][0],5))
+        maj_fwhm=str(round(shp['majoraxis']['value'],3))
+        maj_fwhm_err=str(round(shp['majoraxiserror']['value'],4))
+        min_fwhm=str(round(shp['minoraxis']['value'],3))
+        min_fwhm_err=str(round(shp['minoraxiserror']['value'],4))
+        pa=str(round(shp['positionangle']['value'],1))
         imfit_string=str('Flux: ' + str(round(flx['value'][0],4))+' +/- '
                          +str(round(flx['error'][0],5)) +'\n'
                          + 'Major axis FWHM: ' + str(round(shp['majoraxis']['value'],3))
@@ -1136,14 +1172,16 @@ def imfit_images(imagenames, mask, logging=None):
                          +' +/- '+str(round(shp['minoraxiserror']['value'],4)) +'\n'
                          + 'PA: ' + str(round(shp['positionangle']['value'],1)))
 
-        
+        row=[imname, flux, flux_err, maj_fwhm, maj_fwhm_err, min_fwhm, min_fwhm_err,
+             pa]
         mylog.message( imfit_string )
         mylog.message('')
+        mylog.listprint('imfit values',row)
+        mylog.message('')
+        csv_output.append(row)
+        
+    return csv_output
 
-        #if logfile:
-        #    myfile.write(imfit_string+'\n')
-    #if logfile:
-    #    myfile.close()
 
 
 
@@ -1333,3 +1371,16 @@ def get_restoring_beam(images, logging=None):
         mylog.dictprint(image,{'Major':beammajor, 'Minor':beamminor,'PA':beampa})
         
     
+def write_out_csv_file(csv_list, csv_name):
+    """
+    Write out a list of rows as a csv file to csv_name
+    """
+
+    csvfile=open(csv_name, 'w')
+    writer=csv.writer(csvfile)
+
+    for row in csv_list:
+        writer.writerow(row)
+
+    csvfile.close()
+

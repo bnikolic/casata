@@ -11,6 +11,9 @@ import datetime
 
 __version__='VerNotSet'
 
+#exec(os.popen("bzr version-info --format=python").read())
+#__version__='%(revno)'%version_info
+
 def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
                    control='complete', wvrgcal_options=None, antpos_corr=None, 
                      cal_field=0, ref_ant='DV02', logfile=None, n_iter=100, 
@@ -106,6 +109,10 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     root_name=root_name+timestamp
     split1=root_name+'_split1.ms'
     split2=root_name+'_cont.ms'
+    #imfit and stats .csv files
+    imfit_csv_name=root_name+'_imfit.csv'
+    stats_csv_name=root_name+'_stats.csv'
+    
     #setup the logfile
     if not logfile:
         logfile=root_name+'.rst'
@@ -257,7 +264,8 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         mylog.header('USER FLAGGING', punctuation='=')
         execfile(user_flagging_script)
         mylog.message('User supplied flagging was carried out')
-        mylog.info('User flagging script', user_flagging_script)
+        mylog.info('User flagging script', 
+                   os.path.abspath(user_flagging_script))
         mylog.message('.. literalinclude:: '
                       +os.path.abspath(user_flagging_script) )
 
@@ -338,9 +346,31 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
 
     if stats:
         #compute stats                
-        stats_images(imagenames, bx, logging=mylog)
-        imfit_images(imagenames, mask, logging=mylog)
-    
+        stats_csv=stats_images(imagenames, bx, logging=mylog)
+        imfit_csv=imfit_images(imagenames, mask, logging=mylog)
+
+        #add on full information to stats tables
+        stats_csv=add_full_run_information_to_table(stats_csv, file_root, 
+                     wvr_string, wvr_opt_string, 
+                 quasar_reduction_version, quasar_reduction_opt_string)
+        imfit_csv=add_full_run_information_to_table(imfit_csv, file_root, 
+                     wvr_string, wvr_opt_string, 
+                 quasar_reduction_version, quasar_reduction_opt_string)
+        
+        #write out stats tables
+        write_out_csv_file(stats_csv, stats_csv_name)
+        write_out_csv_file(imfit_csv, imfit_csv_name)
+
+        #now add to the logfile
+        mylog.message('')
+        mylog.message('.. csv-table:: STATS')
+        mylog.message('    :header-rows: 1')
+        mylog.message('    :file: '+stats_csv_name)
+        mylog.message('')
+        mylog.message('.. csv-table::IMFIT on STOKES I')
+        mylog.message('    :header-rows: 1')
+        mylog.message('    :file: '+imfit_csv_name)
+        mylog.message('')
     
     finishtime_s=time.time()
     finishtime_clock=time.ctime()
@@ -350,7 +380,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
 
     quasar_number=len(field_dict.keys())
     imagepattern=root_name+'*'+figext
-    tablepattern=None
+    tablepattern=root_name+'*.csv'
 
     if mylog.output_file:
         sphinx_files(mylog.output_file, imagepattern, tablepattern, file_root,
