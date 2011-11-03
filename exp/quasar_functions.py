@@ -2,6 +2,10 @@
 
 import numpy as np
 import os
+import shutil
+import fnmatch
+import subprocess
+
 #get casa tasks and tools from casata
 import casata.tools.ctools
 from casata.tools.vtasks import *
@@ -1269,21 +1273,62 @@ def sphinx_files(logfile, imagepattern, tablepattern, ms_name,
         
     #get the name of direcotry to store results for this measurement
     #set, and create it if it doesn't already exist
-    resultsdir = os.join(sphinxpath, quasar_dir, ms_name+'_resultsdir')
+    resultsdir = os.path.join(sphinxpath, quasar_dir, ms_name+'_resultsdir')
     if not os.path.isdir(resultsdir):
         os.mkdir(resultsdir)
 
     #copy files into that directory
-    os.copy(logfile, resultsdir)
+    shutil.copy(logfile, resultsdir)
+    print resultsdir
+
     for thefile in os.listdir('.'):
         if imagepattern:
             if fnmatch.fnmatch(thefile, imagepattern):
-                os.copy(thefile, resultsdir)
+                shutil.copy(thefile, resultsdir)
         if tablepattern:
             if fnmatch.fnmatch(thefile, tablepattern):
-                os.copy(thefile, resultsdir)
+                shutil.copy(thefile, resultsdir)
+                
+    #make html in sphinx:
+    #first remove casapy from environ
+    oldpythonpath=os.environ['PYTHONPATH']
+    newpythonpath=[]
+    for i in oldpythonpath[:].split(':'):
+        if i.find('casa') == -1:
+            newpythonpath.append(i)
+    os.environ['PYTHONPATH']=':'.join(newpythonpath)
 
+    oldpath=os.environ['PATH']
+    newpath=[]
+    for i in oldpath[:].split(':'):
+        if i.find('casa') == -1:
+            newpath.append(i)
 
-    if tablepattern:
+    #remove 2 spurious entries...
+    newpath.pop(0)
+    newpath.pop(0)
+    os.environ['PATH']=':'.join(newpath)
+    cwd=os.getcwd()
+    os.chdir(sphinxpath)
+    ret=subprocess.call('make html', shell=True)
+    if ret !=0:
+        print 'Could not make sphinx html automatically'
+    os.environ['PYTHONPATH']=oldpythonpath
+    os.environ['PATH']=oldpath
+    os.chdir(cwd)
 
         
+def cleanup_files(pattern):
+     for thefile in os.listdir('.'):
+        if fnmatch.fnmatch(thefile, pattern):
+            if os.path.isdir(thefile):
+                try:
+                    shutil.rmtree(thefile)
+                except OSError:
+                    print 'Could not remove '+thefile
+            elif os.path.isfile(thefile):
+                try:
+                    os.remove(thefile)
+                except OSError:
+                    print 'Could not remove '+thefile
+                

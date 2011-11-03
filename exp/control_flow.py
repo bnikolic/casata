@@ -118,10 +118,12 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
             mystr+=key+'='+str(wvrgcal_options[key])+' '
         wvrhead+=' '+mystr
     else:
-        wvrhead='no wvrgcal'
+        wvrhead='No WVRGCAL'
         
 
-    runtitle=str(file_root+' '+timestamp+'    '+wvrhead+'    CONTROL: '+str(control))
+    runtitle=file_root+' '+timestamp+' '+wvrhead+' control: '+str(control)
+    if user_flagging:
+        runtitle+=' '+user_flagging
 
     mylog.header(runtitle, punctuation='#')
     mylog.message('quasar_reduction is being performed\n')
@@ -329,20 +331,19 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     mylog.info('Took', '%.1F'%((finishtime_s-starttime_s)/60.0)+' minutes')
 
 
-    #copy .rst file and .png files into sphinx.
-    #First check if directory with root_name exists:
-    #resultsdir=os.join(sphinx_path, number_quasar_name, file_root)
-    #if not os.path.isdir(resultsdir):
-    #    os.mkdir(resultsdir)
+    quasar_number=len(field_dict.keys())
+    imagepattern=root_name+'*'+figext
+    tablepattern=None
+    sphinxpath='/data/sfg30/WVR/quasar_runs'
+    if mylog.output_file:
+        sphinx_files(mylog.output_file, imagepattern, tablepattern, file_root,
+                     sphinxpath, quasar_number)
 
-    #now check that there are no files with current root name+time:
-    
-
-    
     #TODO: delete files -- need to keep track of what has been created
     #so it can be deleted...  don't want to delete too much while its
     #running, to allow us to go back to extra flagging stage and run
     #stuff...
+    cleanup_files(root_name+'*')
     
     
     
