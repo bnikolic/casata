@@ -46,7 +46,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     """
     starttime_s=time.time()
     starttime_clock=datetime.datetime.now()
-    timestamp=starttime_clock.strftime('%Y-%m-%d_%H:%M:%S')
+    timestamp=starttime_clock.strftime('%Y-%m-%d_%H-%M-%S')
 
     #control flow of quasar script
     if control=='complete':
@@ -111,7 +111,8 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         logfile=root_name+'.rst'
 
     mylog=mylogger(root_name=root_name, output_file=True, console=True, logfile=logfile)
-
+    #set up toc to be correct depth
+    mylog.message(':tocdepth: 3'+'\n')
     #intial title of page
     if do_wvrgcal:
         mywvrgcal=calling_wvrgcal.wvrgcal(wvrgcal)
@@ -134,7 +135,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         runtitle+=' '+user_flagging
 
     mylog.header(runtitle, punctuation='#')
-    mylog.message('quasar_reduction is being performed\n')
+    mylog.header('quasar_reduction is being performed', punctuation='=')
     optdict=dict(vis=vis, spws=[1,3,5,7], user_flagging_script=user_flagging_script,
                    control=control, wvrgcal_options=wvrgcal_options, 
                    antpos_corr=antpos_corr, 
@@ -257,6 +258,8 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         execfile(user_flagging_script)
         mylog.message('User supplied flagging was carried out')
         mylog.info('User flagging script', user_flagging_script)
+        mylog.message('.. literalinclude:: '
+                      +os.path.abspath(user_flagging_script) )
 
         #plots after apriori and user flagging???
         #after_apu_flagging_plots(myvis, **info_dict)
@@ -296,9 +299,10 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
                       snr=True, logging=mylog, phase_range=[])
 
         #apply calibrations, slightly differently for cal_field and regular
-        apply_calibrations_calsep(split1, unapplied_caltables, field_dict, cal_field)
+        apply_calibrations_calsep(split1, unapplied_caltables, field_dict, cal_field, logging=mylog)
 
         #plot corrected data
+        
         corrected_plots(split1, spw_chandict, field_dict,  correlations, root_name, 
                         logging=mylog)
 

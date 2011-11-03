@@ -19,6 +19,8 @@ import matplotlib.pyplot as plt
 import logging
 import tempfile
 
+#create csv output files
+import csv
 
 def create_log_file(root_name, mode='w', tag=None):
     """create a logfile with a unique name, opened in the specified
@@ -562,7 +564,7 @@ def initial_plots(vis, spws, correlations, root_name,
         mylog=mylogger(output_file=None, console=True)
     else:
         mylog=logging
-
+    mylog.header('Initial plots', punctuation='-')
     correlations=string_creator(correlations)
     plot_kwargs=dict( vis=vis, xaxis='channel', yaxis='amp', field='',
                           avgtime='1e8', correlation='XX,YY', coloraxis='corr',
@@ -578,7 +580,7 @@ def initial_plots(vis, spws, correlations, root_name,
         output_plots.append(filename)
     
     
-    mylog.plots_created('Initial plots after basic flagging', output_plots)
+    mylog.plots_created('Amp vs Channel, per spw', output_plots)
     return output_plots
 
 
@@ -630,6 +632,7 @@ def bpp_calibration(vis, bpp_caltable, spw_chandict,
         mylog=logging
         
     #print '------ calibrate phases for bandpass calibrator----'
+    mylog.header('Bandpass Phase Calibration', punctuation='-')
     mylog.message('Calibrate phases for bandpass calibrator')
     
     spw_chanstring=spw_channel_marking_fraction(spw_chandict, begin_frac, 
@@ -838,7 +841,7 @@ def apply_calibrations_calsep(vis, caltables, field_dict, cal_field, logging=Non
     #print '----Applying Calibrations:'
     #print '    '+str(caltables)
     #print '...applying to calibration field'
-    mylog.header('Apply Calibrations', punctuation='-')
+    mylog.header('Applying Calibrations', punctuation='=')
 
     applycal_dict=dict(vis=vis, field=cal_field_name, interp=cal_cal_interp,
              gaintable=caltables, gainfield=gain_fields,
@@ -903,7 +906,7 @@ def corrected_plots(vis, spw_chandict, field_dict, correlations, plotroot,
         mylog=mylogger(output_file=None, console=True)
     else:
         mylog=logging
-    mylog.header('Plots of Calibrated Data', punctuation='=')
+    mylog.header('Plots of Calibrated Data', punctuation='-')
     plot_files=[]
   
     plotms_kwargs=dict(
@@ -1070,6 +1073,7 @@ def stats_images(imagenames, bx,logging=None, options_call=None):
     mylog.header(' Stats from the final images')
     mylog.message('\n')
     row=['field', 'stokes', 'maxval', 'minval', 'rms', 'omin', 'max_rms']
+    csv_output.append(row)
     mylog.message('   '.join(row))
     for imname in imagenames:
         obj = imhead(imname, mode='get', hdkey='object')
@@ -1085,12 +1089,13 @@ def stats_images(imagenames, bx,logging=None, options_call=None):
             row=[field, stokes, '%.4G'%maxval, '%.4G'%minval, 
                  '%.4G'%rms, '%.4G'%omin,'%.4G'%max_rms]
             row=[item for item in row]
+            csv_output.append(row)
             row_string='   '.join(row)
             mylog.message(row_string)
         mylog.message('')
     mylog.message('\n')
-                            
-
+    return csv_output
+    
 
 def imfit_images(imagenames, mask, logging=None):
     """
