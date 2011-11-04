@@ -265,7 +265,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
 
         #copy over the user_flagigng file, give it timestamped new name
         new_user_flagging_script=root_name+'_userflagging.py'
-        shutil.copy(user_flagging_file, new_user_flagging_script)
+        shutil.copy(user_flagging_script, new_user_flagging_script)
         user_flagging_script=new_user_flagging_script
 
         execfile(new_user_flagging_script)

@@ -1072,7 +1072,7 @@ def stats_images(imagenames, bx,logging=None, options_call=None):
     csv_output=[]
     #mylog.header(' Stats from the final images')
     #mylog.message('\n')
-    row=['field', 'stokes', 'maxval', 'minval', 'rms', 'omin', 'max_rms']
+    row=['field', 'stokes', 'maxval', 'minval', 'rms', 'omin', 'max/rms']
     csv_output.append(row)
     #mylog.message('   '.join(row))
     for imname in imagenames:
@@ -1085,7 +1085,7 @@ def stats_images(imagenames, bx,logging=None, options_call=None):
             minval=gstat['min'][0]
             rms=bgstat['rms'][0]
             omin=bgstat['min'][0]
-            max_rms=bgstat['max'][0]/bgstat['rms'][0]
+            max_rms=gstat['max'][0]/bgstat['rms'][0]
             row=[field, stokes, '%.4G'%maxval, '%.4G'%minval, 
                  '%.4G'%rms, '%.4G'%omin,'%.4G'%max_rms]
             row=[item for item in row]
@@ -1277,7 +1277,7 @@ def underline_string(mystring, punctuation='='):
 
 
 def sphinx_files(logfile, imagepattern, tablepattern, ms_name, 
-                 sphinx_path, quasar_number, make_html=None, user_flagging_file=None):
+                 sphinx_path, quasar_number, make_html=None, user_flagging_script=None):
     """
     Copy the .rst logfile, any images matching the specified pattern,
     any tables matching the specified pattern into a directory named
