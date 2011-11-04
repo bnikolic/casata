@@ -1070,7 +1070,7 @@ def stats_images(imagenames, bx,logging=None, options_call=None):
         mylog=logging
 
     csv_output=[]
-    mylog.header(' Stats from the final images')
+    #mylog.header(' Stats from the final images')
     #mylog.message('\n')
     row=['field', 'stokes', 'maxval', 'minval', 'rms', 'omin', 'max_rms']
     csv_output.append(row)
@@ -1139,7 +1139,7 @@ def imfit_images(imagenames, mask, logging=None):
         mylog=logging
 
     csv_output=[]
-    mylog.header('IMFIT: fitting  to STOKES I image')
+    #mylog.header('IMFIT: fitting  to STOKES I image')
     csv_output.append(['IMAGENAME', 'FLUX','FLUX_ERR', 'MAJ_FWHM', 'MAJ_FWHM_ERR',
                       'MIN_FWHM', 'MIN_FWHLM_ERR','PA'])
     #get box values in expected format
@@ -1277,7 +1277,7 @@ def underline_string(mystring, punctuation='='):
 
 
 def sphinx_files(logfile, imagepattern, tablepattern, ms_name, 
-                 sphinx_path, quasar_number, make_html=None):
+                 sphinx_path, quasar_number, make_html=None, user_flagging_file=None):
     """
     Copy the .rst logfile, any images matching the specified pattern,
     any tables matching the specified pattern into a directory named
@@ -1305,6 +1305,11 @@ def sphinx_files(logfile, imagepattern, tablepattern, ms_name,
         if tablepattern:
             if fnmatch.fnmatch(thefile, tablepattern):
                 shutil.copy(thefile, resultsdir)
+
+    if user_flagging_script:
+        shutil.copy(user_flagging_script, resultsdir)
+        
+
                 
     #make html in sphinx:
     #first remove casapy from environ

@@ -123,7 +123,7 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     #intial title of page
     if do_wvrgcal:
         mywvrgcal=calling_wvrgcal.wvrgcal(wvrgcal)
-        ver=mywvrgcal.version()
+        ver=mywvrgcal.version
         wvrhead='WVRGCAL ver. '+ver+' wvroptions:'
         wvr_string='WVR: '+ver
         mystr=''
@@ -262,12 +262,19 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     if user_flagging:
 
         mylog.header('USER FLAGGING', punctuation='=')
-        execfile(user_flagging_script)
+
+        #copy over the user_flagigng file, give it timestamped new name
+        new_user_flagging_script=root_name+'_userflagging.py'
+        shutil.copy(user_flagging_file, new_user_flagging_script)
+        user_flagging_script=new_user_flagging_script
+
+        execfile(new_user_flagging_script)
+
         mylog.message('User supplied flagging was carried out')
-        mylog.info('User flagging script', 
+        mylog.info('User flagging script stored', 
                    os.path.abspath(user_flagging_script))
         mylog.message('.. literalinclude:: '
-                      +os.path.abspath(user_flagging_script) )
+                      +user_flagging_script )
 
         #plots after apriori and user flagging???
         #after_apu_flagging_plots(myvis, **info_dict)
@@ -390,7 +397,8 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
 
     if mylog.output_file:
         sphinx_files(mylog.output_file, imagepattern, tablepattern, file_root,
-                     sphinx_path, quasar_number, make_html=make_html)
+                     sphinx_path, quasar_number, make_html=make_html, 
+                     user_flagging_script=user_flagging_script)
 
     #TODO: delete files -- need to keep track of what has been created
     #so it can be deleted...  don't want to delete too much while its
