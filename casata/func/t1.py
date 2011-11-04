@@ -4,6 +4,9 @@
 Functional data analysis, test script
 """
 
+if 0:
+    sys.path.remove("/usr/lib/python2.6/dist-packages/tables")
+
 @Macro
 def AntPos(ms, aname, apos):
     return None

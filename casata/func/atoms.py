@@ -5,7 +5,14 @@
 Indivisible operations on measurement sets and cal tables
 """
 
+import os
+
 import macro, files
+
+_atoml=[]
+
+def atom_p(n):
+    return n in _atoml
 
 def AtomMS(f):
     """
@@ -13,6 +20,7 @@ def AtomMS(f):
     """
     rf=macro.Macro(f)
     rf.expand=None
+    _atoml.append(f.func_name)
     return rf
 
 @AtomMS
@@ -48,14 +56,37 @@ def MSCpy(ms,
     """
     return None
 
-def pl_eval(l):
-    pass
 
+
+def pl_eval(l):
+    if type(l)==str:
+        return l
+    if atom_p(l[0]):
+        return atom_eval(l)
+
+def despatch_cmd(l):
+    for c, p in l:
+        if c=="sh":
+            os.system(p)
+        elif c=="vtask":
+            #fn=getattr(vtasks, "applycal")
+            exec("vtasks."+p)
+            
 def atom_eval(l):
+    if files.cached_p(l):
+        return files.cached_res(l)
     fn=globals()[l[0]+"_impl"]
     cmd, res=fn(*l[1:-1], **l[-1])
     files.cache.append([l, res])
     print cmd, res
+    despatch_cmd(cmd)
+    return res
+
+def endp_eval(l):
+    fn=globals()[l[0]+"_impl"]
+    cmd=fn( *map(pl_eval, l[1:-1]), **l[-1])
+    print cmd
+    despatch_cmd(cmd)
 
 def MSName(l):
     if l[0]=="MS":
@@ -71,6 +102,9 @@ def WVR_impl(msin, *args, **kwargs):
 
 def MSCpy_impl(msin, fnameout):
     return [ ["sh", "cp -r %s %s" % (MSName(msin), fnameout) ]]
+
+def go_reduce():
+    pass
 
 
 

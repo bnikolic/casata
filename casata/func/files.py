@@ -12,6 +12,11 @@ cache=[]
 def cached_p(l):
     return any([x[0]==l for x in cache])
 
+def cached_res(l):
+    for x in cache:
+        if x[0]==l: 
+            return x[1]
+
 def newfname(pref, suf):
     i=0
     fname="cache/%s-%i.%s" % (pref, i, suf)
