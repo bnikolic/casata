@@ -1072,7 +1072,7 @@ def stats_images(imagenames, bx,logging=None, options_call=None):
     csv_output=[]
     #mylog.header(' Stats from the final images')
     #mylog.message('\n')
-    row=['field', 'stokes', 'maxval', 'minval', 'rms', 'omin', 'max/rms']
+    row=['FIELD', 'stokes', 'maxval', 'minval', 'rms', 'omin', 'max/rms']
     csv_output.append(row)
     #mylog.message('   '.join(row))
     for imname in imagenames:
@@ -1096,7 +1096,7 @@ def stats_images(imagenames, bx,logging=None, options_call=None):
     #mylog.message('\n')
     return csv_output
     
-def add_full_run_information_to_table(csv_list, ms_name, wvr_string, wvr_opt_string, quasar_reduction_version, quasar_reduction_opt_string):
+def add_full_run_information_to_table(csv_list, ms_name, wvr_string, wvr_opt_string, quasar_reduction_version, quasar_reduction_opt_string, beams=None):
 
     """
     for a list of table rows, attach the ms_name to the beginning of
@@ -1106,19 +1106,29 @@ def add_full_run_information_to_table(csv_list, ms_name, wvr_string, wvr_opt_str
     """
     csv_output=[]
     headers=csv_list[0]
+    field_index=headers.index('FIELD')
     headers.insert(0, 'MS_NAME')
+    if beams:
+        headers.append('R.BEAM')
     headers.append('WVR_VERSION')
     headers.append('WVR_OPTIONS')
     headers.append('QRED_VERSION')
     headers.append('QRED_OPTIONS')
     csv_output.append(headers)
     for row in csv_list[1:]:
+        if beams:
+            field=row[field_index]
+            beamdict=beams[field]
+            beamstr=','.join([str(key)+'='+str(beamdict[key]) for key in beamdict])
+            row.append(beamstr)            
         row.insert(0, ms_name)
         row.append(wvr_string)
         row.append(wvr_opt_string)
         row.append(quasar_reduction_version)
         row.append(quasar_reduction_opt_string)
         csv_output.append(row)
+
+            
     return csv_output
         
 
@@ -1140,7 +1150,7 @@ def imfit_images(imagenames, mask, logging=None):
 
     csv_output=[]
     #mylog.header('IMFIT: fitting  to STOKES I image')
-    csv_output.append(['IMAGENAME', 'FLUX','FLUX_ERR', 'MAJ_FWHM', 'MAJ_FWHM_ERR',
+    csv_output.append(['FIELD', 'FLUX','FLUX_ERR', 'MAJ_FWHM', 'MAJ_FWHM_ERR',
                       'MIN_FWHM', 'MIN_FWHLM_ERR','PA'])
     #get box values in expected format
     imfitbox=','.join(str(value) for value in mask)
@@ -1313,7 +1323,10 @@ def sphinx_files(logfile, imagepattern, tablepattern, ms_name,
                 
     #make html in sphinx:
     #first remove casapy from environ
-    oldpythonpath=os.environ['PYTHONPATH']
+    try:
+        oldpythonpath=os.environ['PYTHONPATH']
+    except KeyError:
+        oldpythonpath=''
     newpythonpath=[]
     for i in oldpythonpath[:].split(':'):
         if i.find('casa') == -1:
@@ -1369,13 +1382,17 @@ def get_restoring_beam(images, logging=None):
         mylog=logging
 
     mylog.header('Beam Info from images')
-    
+    beams={}
     for image in images:
         imlist=imhead(imagename=image, mode='list')
+        field=imlist['object']
         beammajor=imlist['beammajor']
         beamminor=imlist['beamminor']
         beampa=imlist['beampa']
-        mylog.dictprint(image,{'Major':beammajor, 'Minor':beamminor,'PA':beampa})
+        beamdict={'Major':beammajor, 'Minor':beamminor,'PA':beampa}
+        mylog.dictprint(image,beamdict)
+        beams[field]=beamdict
+    return beams
         
     
 def write_out_csv_file(csv_list, csv_name):
@@ -1391,3 +1408,40 @@ def write_out_csv_file(csv_list, csv_name):
 
     csvfile.close()
 
+
+
+def make_postage_plot(fitsfile, slices, imsize, pixsize, imagename, 
+                      figsize=[4,12], slicenames=['I','Q','U','V']):
+    """
+    Make a small plot of the centre of a fits file.
+
+    Seems to work for most quasar plots?
+
+    """
+    try:
+        import aplpy
+        import aplpy.chanmap
+
+        #get pixsize as float..
+        
+        pixsize=float(str(pixsize).split('arcsec')[0])
+    
+        
+        gc=aplpy.chanmap.GridImages(fitsfile, slices=slices, figsize=figsize, 
+                                    cbar_mode='none', nrows_ncols=[1,4])
+        ra, dec=gc.FITSFigure[0].pixel2world(imsize/2,imsize/2)
+        gc.recenter(ra, dec, radius=pixsize*75/(60.0*60.0))
+        for i in gc.FITSFigure:
+            i.show_colorscale(cmap='gist_gray', pmax=99.97, stretch='arcsinh')
+        gc.set_label_mode('none')
+        gc.label_channels(names=slicenames, color='blue', fontsize='xx-large', 
+                          va='top', ha='right')
+        gc._figure.savefig(imagename)
+        os.system('/usr/bin/convert -trim '+imagename+' '+imagename)
+        return imagename
+    except ImportError:
+        print "Can't produce images of data: correct version of aplpy not existant"
+        print "Try adding /data/sfg30/soft_aplpydev/lib/python2.6/site-packages/"
+        print "To the front of the pythonpath"
+        return None
+        

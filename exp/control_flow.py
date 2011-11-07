@@ -112,7 +112,9 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
     #imfit and stats .csv files
     imfit_csv_name=root_name+'_imfit.csv'
     stats_csv_name=root_name+'_stats.csv'
-    
+    stats_csv_name_short=root_name+'_stats_short.csv'
+    imfit_csv_name_short=root_name+'_imfit_short.csv'
+
     #setup the logfile
     if not logfile:
         logfile=root_name+'.rst'
@@ -347,26 +349,36 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         #TODO: test this function
         imagenames=clean_data(split2, pixsize, im_size, mask, n_iter, field_dict,
                               cleanweighting, cleanspw, cleanmode, root_name, logging=mylog)
-        get_restoring_beam(imagenames, logging=mylog)
+        
         #make fits images:
         fitsimages=create_fits_images(imagenames, logging=mylog)
 
+        #make picture of fitsfiles:
+        for fitsfile in fitsimages:
+            print fitsfile
+            finalpicname=fitsfile+'.'+figext
+            finalpicname=make_postage_plot(fitsfile, [[0,0],[1,0],[2,0],[3,0]],
+                                       im_size, pixsize, finalpicname)
+            if finalpicname:
+                mylog.plots_created('', [finalpicname])
+            
     if stats:
         #compute stats                
         stats_csv=stats_images(imagenames, bx, logging=mylog)
         imfit_csv=imfit_images(imagenames, mask, logging=mylog)
+        beams=get_restoring_beam(imagenames, logging=mylog)
 
         #write out short stats csv file
-        #write_out_csv_file(stats_csv, stats_csv_name_short)
-        #write_out_csv_file(imfit_csv, imfit_csv_name_short)
+        write_out_csv_file(stats_csv, stats_csv_name_short)
+        write_out_csv_file(imfit_csv, imfit_csv_name_short)
         
         #add on full information to stats tables
         stats_csv=add_full_run_information_to_table(stats_csv, file_root, 
-                     wvr_string, wvr_opt_string, 
-                 quasar_reduction_version, quasar_reduction_opt_string)
+                            wvr_string, wvr_opt_string,
+                 quasar_reduction_version, quasar_reduction_opt_string, beams=beams)
         imfit_csv=add_full_run_information_to_table(imfit_csv, file_root, 
                      wvr_string, wvr_opt_string, 
-                 quasar_reduction_version, quasar_reduction_opt_string)
+                 quasar_reduction_version, quasar_reduction_opt_string, beams=beams)
         
         #write out full stats tables
         write_out_csv_file(stats_csv, stats_csv_name)
@@ -375,14 +387,17 @@ def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
         #now add  logfile
         mylog.header('STATS of Images')
         mylog.message('')
+        mylog.message('The full table is stored in '+stats_csv_name)
+        mylog.message('')
         mylog.write('.. csv-table:: STATS')
         mylog.write('    :header-rows: 1')
-        mylog.write('    :file: '+stats_csv_name)
+        mylog.write('    :file: '+stats_csv_name_short)
         mylog.message('')
+        mylog.message('The full table is in '+imfit_csv_name)
         mylog.message('')
         mylog.write('.. csv-table:: IMFIT on STOKES I')
         mylog.write('    :header-rows: 1')
-        mylog.write('    :file: '+imfit_csv_name)
+        mylog.write('    :file: '+imfit_csv_name_short)
         mylog.message('')
     
     finishtime_s=time.time()
