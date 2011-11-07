@@ -1411,7 +1411,7 @@ def write_out_csv_file(csv_list, csv_name):
 
 
 def make_postage_plot(fitsfile, slices, imsize, pixsize, imagename, 
-                      figsize=[4,12], slicenames=['I','Q','U','V']):
+                      figsize=[6,18], slicenames=['I','Q','U','V']):
     """
     Make a small plot of the centre of a fits file.
 
