@@ -104,7 +104,10 @@ def MSCpy_impl(msin, fnameout):
     return [ ["sh", "cp -r %s %s" % (MSName(msin), fnameout) ]]
 
 def go_reduce():
-    pass
+    while len(endp):
+        c=endp.pop(0)
+        endp_eval(c)
+
 
 
 
