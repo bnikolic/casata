@@ -463,7 +463,7 @@ def apriori_flagging(vis, quackinterval=1.5, quackincrement=True, logging=None):
     mylog.message('Autocorrelations were flagged')
     #flag any data that is shadowed
     flagdata(vis=vis, mode='shadow', flagbackup=False)
-    mylog.message('Shadowed data was flagged')
+    mylog.message('Shadowed data were flagged')
     #quack the data
     flagdata(vis=vis, flagbackup=False, mode='quack', 
              quackinterval=quackinterval,
