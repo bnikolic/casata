@@ -36,6 +36,16 @@ def WVR(ms):
     """
     return None
 
+@AtomMS
+def AntPos(ms, antposl):
+    """
+    Correct for antenna position errors. 
+    """
+    return None
+
+
+
+
 
 
 
