@@ -8,7 +8,8 @@ Indivisible operations on measurement sets and cal tables
 import os
 
 import macro, files
-
+from casa_impl import *
+ 
 _atoml=[]
 
 def atom_p(n):
@@ -88,26 +89,13 @@ def endp_eval(l):
     print cmd
     despatch_cmd(cmd)
 
-def MSName(l):
-    if l[0]=="MS":
-        return l[1]
-
-def WVR_impl(msin, *args, **kwargs):
-    msin=MSName(msin)
-    msout=files.new_ms(["WVR", msin] + list(args) + [kwargs])
-    return [ ["sh", "/home/bnikolic/n/libair/head/cmdline/wvrgcal --ms %s --output temp.W" % msin],
-             ["vtask", "applycal('%s', gaintable=[\"temp.W\"])" % msin],
-             ["vtask", "split('%s', outputvis='%s', datacolumn='corrected')" % (msin, msout)]
-             ], MS(msout)
-
-def MSCpy_impl(msin, fnameout):
-    return [ ["sh", "cp -r %s %s" % (MSName(msin), fnameout) ]]
-
 def go_reduce():
     while len(endp):
         c=endp.pop(0)
         endp_eval(c)
 
+# Simple example
+# MSCpy(WVR(MS("i/uid___A002_Xb9f5d_X1.ms")), "mytest2.ms")
 
 
 
