@@ -6,7 +6,8 @@ import numpy as np
 
 import matplotlib
 matplotlib.rcParams['font.size']=7
-
+import pylab as pl
+from casata.tools.vtasks import *
 import calling_wvrgcal
 
 #TODO: fix get_imaging_params
@@ -38,23 +39,6 @@ import calling_wvrgcal
 #additional flagging only (so don't have to repeat apriori
 #calibrations again)
 
-gencal_ant = 'DV02,DV04,DV05,DV06,DV07,DV08,DV10,DV12,DV13,PM01,PM03'
-gencal_pos = [
-     0.000228, -0.000334, -0.000013,
-     0.000163, 0.000239, 0.000025,
-     0.000060, -0.000092, 0.000384,
-     0.000053, 0.000158, 0.000001,
-     0.000103, 0.000328, 0.000351,
-    -0.000039, -0.000085, -0.000041,
-    -0.000331, -0.000056, 0.000246,
-     0.000133, -0.000210, -0.000160,
-    -0.000045, 0.000104, 0.000109,
-     0.000191, 0.000010, 0.000119,
-     0.000159, 0.000005, -0.000054
-]
-
-wvrgcal_options={'toffset': -1, 'segsource': True}
-#                 'wvrflag':['DV08','DV10'], 'statsource': '1924-292'}
 
 def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
                         gencal_ant=None, gencal_pos=None,
@@ -122,11 +106,14 @@ def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
 
     #basic names
     ms_name = vis
+    myvis=vis
     root_name = os.path.split( os.path.splitext(ms_name)[0] )[1]
     root=root_name
     split1=root_name+'_split1.ms'
     split2=root_name+'_cont.ms'
 
+    #plotants
+    #plotants(vis, figfile='antenna_map.png')
     #wvrgcal names
     wvrgcal_table=root_name+'_wvrgcal.W'
 
@@ -150,11 +137,11 @@ def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
     figext='.png'
 
     #get information about data set
-    ants, field_names, field_ids, spw_chandict, spw_freqdict,band,max_baseline=get_vis_info(myvis)
+    ants, field_dict, spw_chandict, spw_freqdict,band,max_baseline=get_vis_info(myvis)
 
     #CHECK FOR 7 M ANTENNA -- these don't have wvr, need to be flagged
     #in WVRGCAL call -- possibly all start with CM field dictionary
-    field_dict=dict( zip( field_ids, field_names) )
+    #field_dict=dict( zip( field_ids, field_names) )
     im_size=512
     n_iter=100
     mask_dx=18
@@ -277,7 +264,7 @@ def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
             
         #if 'tie' option not set, tie all fields
         if not wvrgcal_options.has_key('tie'):
-            wvrgcal_options['tie']=string_creator(field_names)
+            wvrgcal_options['tie']=string_creator(field_dict.values())
         else:
             try:
                 wvrgcal_options['tie']=string_creator(
@@ -293,14 +280,19 @@ def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
     #applycal for antenna positions and wvrgcal, if done
     if unapplied_caltable:
         print 'Applying calibrations ------'
-        #applycal(vis=ms_name, gaintable=unapplied_caltable)
+        applycal(vis=ms_name, gaintable=unapplied_caltable)
+        datacolumn='corrected'
         unapplied_caltable=[]
 
+    else:
+        datacolumn='data'
     #separate only the science spws
     print 'SPLIT OUT SCIENCE DATA ----'
+
+    
     split(vis=ms_name,
           outputvis = split1,
-          datacolumn = 'corrected', #We have applied the antpos_fix
+          datacolumn = datacolumn, #We have applied the antpos_fix
                                     #table (+wvr table perhaps).
           spw = string_creator(spws)
           )
@@ -325,13 +317,15 @@ def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
         filename=root+'00_initial_amp_vs_chan_spw'+str(spw)+'.png'
         plotms(vis=split1, xaxis='channel', yaxis='amp', field='',
                avgtime='1e8', correlation='XX,YY',coloraxis='corr',
-               plotfile=filename, overwrite=True,interactive=False)
+               plotfile=filename, overwrite=True,interactive=False, spw=str(spw))
 
     print '----Further flagging?----'
-    spw_markers=flagging_spw_ends(spw_chandict, method=spwflagmethod,
-                                 flagrange=spwflagrange)
+    #spw_markers=flagging_spw_ends(spw_chandict, method=spwflagmethod,
+    #                             flagrange=spwflagrange)
     #TEMPTODO: repeating marcel's version
-    spw_markers=['*:0~3'] 
+    spw_markers=['*:0~3']
+    if band==3:
+        spw_markers=['*:0~5']
     flagdata(vis=split1, flagbackup=False, spw=spw_markers)
 
     #at this point allow user to check?
@@ -522,7 +516,7 @@ def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
         yaxis = 'amp',
         ydatacolumn = 'corrected',
         coloraxis = 'field',
-        avgchannel=string_creator(spw_chandict.values())
+        avgchannel=string_creator(spw_chandict.values()))
 
     #amplitude vs time, per spw and per correlation
     for correlation in ['XX','YY']:
@@ -543,6 +537,7 @@ def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
     plotms_kwargs['coloraxis']='spw'
     plotms_kwargs['spw']=''
     for correlation in ['XX','YY']:
+        plotms_kwargs['correlation']=correlation
         for field in field_dict.values():
             plotms_kwargs['field']=field
             plotms_kwargs['plotfile']=corrdata_uvplot+field+'_'+correlation+figext
@@ -631,14 +626,14 @@ def reduce_quasar_data( vis, spws=[1,3,5,7], cal_field=0,
 
     print '---- EXPORTING FITS (I,Q,U,V) IMAGES ----'
 
-    default(exportfits)
+    #default(exportfits)
     for field in field_dict.values():
         imname = root+'f'+field+'.image'
         exportfits(imagename=imname, fitsimage=imname+'.fits')
 
     print '---- RUNNING IMFIT ON STOKES I IMAGES ----'
 
-    default(imfit)
+    #default(imfit)
     for field in field_dict.values():
         imname = root+'f'+field+'.image'
         print imname
@@ -674,12 +669,29 @@ def apriori_flagging(vis, quackinterval=1.5, quackincrement=True):
                 comment = 'After, autocorr, shadow, and quack.')
 
 
-       
+gencal_ant = 'DV02,DV04,DV05,DV06,DV07,DV08,DV10,DV12,DV13,PM01,PM03'
+gencal_pos = [
+     0.000228, -0.000334, -0.000013,
+     0.000163, 0.000239, 0.000025,
+     0.000060, -0.000092, 0.000384,
+     0.000053, 0.000158, 0.000001,
+     0.000103, 0.000328, 0.000351,
+    -0.000039, -0.000085, -0.000041,
+    -0.000331, -0.000056, 0.000246,
+     0.000133, -0.000210, -0.000160,
+    -0.000045, 0.000104, 0.000109,
+     0.000191, 0.000010, 0.000119,
+     0.000159, 0.000005, -0.000054
+]
+
+wvrgcal_options={'toffset': -1, 'segsource': True}
+#                'wvrflag':['DV08','DV10'], 'statsource': '1924-292'}
+      
         
-myvis='uid___A002_X219601_X4cd.ms'
-reduce_quasar_data( myvis, spws=[1,3,5,7], cal_field=0,
-                        gencal_ant=gencal_ant, gencal_pos=gencal_pos,
-                        wvrgcal='/data/sfg30/softwvr_script/bin/wvrgcal', 
-                    wvrgcal_options=wvrgcal_options,
-                        extra_flagging_file=None, beginning_only=False,
-                        ref_ant='DV02')
+# myvis='uid___A002_X219601_X4cd.ms'
+# reduce_quasar_data( myvis, spws=[1,3,5,7], cal_field=0,
+#                         gencal_ant=gencal_ant, gencal_pos=gencal_pos,
+#                         wvrgcal='/data/sfg30/softwvr_script/bin/wvrgcal', 
+#                     wvrgcal_options=wvrgcal_options,
+#                         extra_flagging_file=None, beginning_only=False,
+#                         ref_ant='DV02')
