@@ -15,7 +15,7 @@ __version__='0.1'
 #__version__='%(revno)'%version_info
 
 def quasar_reduction(vis, spws=[1,3,5,7], user_flagging_script=None,
-                   control='complete', wvrgcal_options=None, antpos_corr=None, 
+                     control='complete', wvrgcal_options=None, antpos_corr=None, 
                      cal_field=0, ref_ant='DV02', logfile=None, n_iter=100, 
                      make_html=None, clean_files=None, 
                      sphinx_path='/data/sfg30/WVR/quasar_runs/'):
