@@ -1287,7 +1287,7 @@ def underline_string(mystring, punctuation='='):
 
 
 def sphinx_files(logfile, imagepattern, tablepattern, ms_name, 
-                 sphinx_path, quasar_number, make_html=None, user_flagging_script=None):
+                 sphinx_path, quasar_number, make_html=None, user_flagging_script=None, group=None):
     """
     Copy the .rst logfile, any images matching the specified pattern,
     any tables matching the specified pattern into a directory named
@@ -1298,27 +1298,53 @@ def sphinx_files(logfile, imagepattern, tablepattern, ms_name,
     #get the path for the number of quasars
     quasar_dir=str(int(quasar_number))+'quasar'
         
+    
+
+    #if the group of the files needs to be set to something other than
+    #default
+    if group:
+        import grp
+        uid=os.getuid()
+        gid=grp.getgrnam(group)[2]
+        oldumask=os.umask(0002)
     #get the name of direcotry to store results for this measurement
     #set, and create it if it doesn't already exist
     resultsdir = os.path.join(sphinx_path, quasar_dir, ms_name+'_resultsdir')
     if not os.path.isdir(resultsdir):
         os.mkdir(resultsdir)
-
+        if group:
+            os.chown(resultsdir, uid, gid)
+            #os.chmod(resultsdir, 0775)
+    
     #copy files into that directory
     shutil.copy(logfile, resultsdir)
+    if group:
+        outfile=os.path.join(resultsdir,logfile)
+        os.chown(outfile, uid, gid)
+        #os.chmod(outfile, 0664)
     print resultsdir
 
     for thefile in os.listdir('.'):
         if imagepattern:
             if fnmatch.fnmatch(thefile, imagepattern):
                 shutil.copy(thefile, resultsdir)
+                if group:
+                    outfile=os.path.join(resultsdir,thefile)
+                    os.chown(outfile, uid, gid)
+                    #os.chmod(outfile, 0664)
         if tablepattern:
             if fnmatch.fnmatch(thefile, tablepattern):
                 shutil.copy(thefile, resultsdir)
-
+                if group:
+                    outfile=os.path.join(resultsdir,thefile)
+                    os.chown(outfile, uid, gid)
+                    #os.chmod(outfile, 0664)
     if user_flagging_script:
         shutil.copy(user_flagging_script, resultsdir)
-        
+        if group:
+            outfile=os.path.join(resultsdir,user_flagging_script)
+            os.chown(outfile, uid, gid)
+            #os.chmod(outfile, 0664)
 
                 
     #make html in sphinx:
@@ -1328,9 +1354,11 @@ def sphinx_files(logfile, imagepattern, tablepattern, ms_name,
     except KeyError:
         oldpythonpath=''
     newpythonpath=[]
+    WITHIN_CASA=None
     for i in oldpythonpath[:].split(':'):
         if i.find('casa') == -1:
             newpythonpath.append(i)
+            WITHIN_CASA=True
     os.environ['PYTHONPATH']=':'.join(newpythonpath)
 
     oldpath=os.environ['PATH']
@@ -1339,20 +1367,39 @@ def sphinx_files(logfile, imagepattern, tablepattern, ms_name,
         if i.find('casa') == -1:
             newpath.append(i)
 
-    #remove 2 spurious entries...
-    newpath.pop(0)
-    newpath.pop(0)
+    #remove 2 spurious entries produced by CASA
+    if WITHIN_CASA:
+        newpath.pop(0)
+        newpath.pop(0)
+
     os.environ['PATH']=':'.join(newpath)
     cwd=os.getcwd()
     os.chdir(sphinx_path)
 
     if make_html:
         ret=subprocess.call('make html', shell=True)
+        if group:
+            for root, dirs, files in os.walk(os.path.join(
+                    sphinx_path,'_build/')):
+                for d in dirs:
+                    try:
+                        os.chown(os.path.join(root, d), uid, gid)
+                    except OSError:
+                        pass
+                for f in files:
+                    try:
+                        os.chown(os.path.join(root, f), uid, gid)
+                    except OSError:
+                        pass
         if ret !=0:
             print 'Could not make sphinx html automatically'
+
+        #sort out permissions
     os.environ['PYTHONPATH']=oldpythonpath
     os.environ['PATH']=oldpath
     os.chdir(cwd)
+    if group:
+        os.umask(oldumask)
 
         
 def cleanup_files(pattern):
