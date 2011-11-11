@@ -45,7 +45,11 @@ def scanDirCos(msin,
     Dictionary of direction cosines of each scan in the observation
     """
     res={}
+    #tb=ctools.get("tb")
+    #tb.open(msin)
+    
     for sno in data.scans(msin):
+        print sno
         d=data.vis(msin,
                    ["TARGET"], 
                    a1=0, 
@@ -76,22 +80,64 @@ def baselineSolve(s, g, dc,
     return x*wavel/(2*math.pi)
 
 
-def baselineExample(msin):
+def baselineExample(msin, combine="scan", spw="0"):
     vtasks.gaincal(msin, 
                    "test.G", 
-                   spw="2", 
+                   spw=spw, 
                    gaintype="G", 
                    calmode="p", 
-                   combine="scan")
+                   combine=combine)
+    print 'done gaincal'
     dc=scanDirCos(msin)
-    wavel=3e8/data.chfspw(msin, 2).mean()
+    print '...done scanDirCos'
+    wavel=3e8/data.chfspw(msin, int(spw)).mean()
+    print '...done wavel'
+
+    print '...going through each antenna'
+
+    output_rotated=[0.0,0.0,0.0]
+    antenna_list=[str(0)]
     for a in range(1, data.nant(msin)):
         s, p=getPhases("test.G", a)
         res=baselineSolve(s, p, dc, wavel)
-        print "Offset of antenna %i is %s " % (a, str(res))
-                          
-        
+        rotateres=antRotate(res)
+        print '[%10.6f,%10.6f,%10.6f], #antenna=%i'%(
+            rotateres[0],rotateres[1],rotateres[2], a)
+        #print "Offset of antenna %i is %s " % (a, str(res))
+        output_rotated.append(rotateres[0])
+        output_rotated.append(rotateres[1])
+        output_rotated.append(rotateres[2])
+        antenna_list.append(str(a))
+    return antenna_list, output_rotated
     
+def antRotate(res):
+    """
+    This rotates the antenna solutions from the ENU (east-north) system
     
+    to the ECEF (Earth Centered Earth Fixed) system.
+
+    Takes in Antenna offset, length 3, returns list length 3
+
+    Although possibly could be an array of arrays?
+
+
+    """
+    rotateres = []
+
+    #latitude and longitude of ALMA
+    latitude = -23.01928333 * 3.14159/180.0
+    longitude = 67.75317778 * 3.14159/180.0
+
+    #sin and cos's of ALMA position
+    slat = numpy.sin(latitude)
+    clat = numpy.cos(latitude)
+    slong = numpy.sin(longitude)
+    clong = numpy.cos(longitude)
+
+    #Conversion to ECEF coordinate frame
+    rotateres.append (-res[0]*slong + res[1]*slat*clong - res[2]*clat*clong)
+    rotateres.append (-res[0]*clong - res[1]*slat*slong - res[2]*clat*slong)
+    rotateres.append (              - res[1]*clat       - res[2]*slat)
+    return rotateres
                      
                      
