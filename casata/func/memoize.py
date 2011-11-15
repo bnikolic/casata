@@ -35,6 +35,7 @@ def MSMemz(f):
             c[k]=r
             saveCache(ms, c)
             return r
+    return newf
     
         
         
