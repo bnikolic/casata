@@ -99,21 +99,25 @@ def baselineSolve(s, g, dc,
     cc=wavel/(2*math.pi)
     return x[0]*cc
 
+def flFirst(p):
+    "Filter the phases simply by removing from others the first value"
+    return p-p[0]
+
 
 def baselineExample(msin, 
-                    combine="scan", 
                     spw="0"):
     dc=scanDirCos(msin)
     wavel=3e8/data.chfspw(msin, int(spw)).mean()
     output_rotated=[0.0,0.0,0.0]
     antenna_list=[str(0)]
     aphases=getPhasesAll(msin,
-                         combine=combine,
                          spw=spw)
     for a in range(1, data.nant(msin)):
         s, p=aphases[a]
-        res=baselineSolve(s, p, 
-                          dc, wavel)
+        res=baselineSolve(s, 
+                          flFirst(p), 
+                          dc, 
+                          wavel)
         rotateres=antRotate(res)
         print '[%10.6f,%10.6f,%10.6f], #antenna=%i'%(
             rotateres[0],rotateres[1],rotateres[2], a)
