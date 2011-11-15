@@ -27,9 +27,9 @@ def MSMemz(f):
     """
     def newf(ms, *args, **kwargs):
         c=openCache(ms)
-        k=(args, kwargs)
+        k=(f.__name__, args, kwargs)
         if c.has_key(k):
-            return k
+            return c[k]
         else:
             r=f(*args, **kwargs)
             c[k]=r
