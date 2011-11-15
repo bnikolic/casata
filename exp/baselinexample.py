@@ -53,9 +53,14 @@ def calcDirCos(az, el):
     
     :returns: X (east), Y(north), Z(up)
     """
-    return (numpy.sin(az)*numpy.cos(el),
-            numpy.cos(az)*numpy.cos(el),
-            numpy.sin(el))
+    #Due to timestamp issues there can be an occasional NaN in the
+    #az/el. Since we are just interested in the mean we can filter
+    #these outs
+    mask=numpy.logical_and(numpy.isfinite(az),
+                           numpy.isfinite(el))
+    return (numpy.sin(az[mask].mean())*numpy.cos(el[mask].mean()),
+            numpy.cos(az[mask].mean())*numpy.cos(el[mask].mean()),
+            numpy.sin(el[mask].mean()))
 
 @memoize.MSMemz
 def scanDirCos(msin,
@@ -77,8 +82,8 @@ def scanDirCos(msin,
                    scan=sno)
         if d[0][0].std() > warndrift or d[0][1].std() > warndrift:
             print "Antennas seem to have moved a lot during scan %i " % sno
-        res[sno]=calcDirCos(d[0][0].mean(),
-                            d[0][1].mean())
+        res[sno]=calcDirCos(d[0][0],
+                            d[0][1])
     return res
 
 def baselineSolve(s, g, dc,
