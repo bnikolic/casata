@@ -34,7 +34,7 @@ def MSMemz(f):
         if c.has_key(k):
             return c[k]
         else:
-            r=f(*args, **kwargs)
+            r=f(ms, *args, **kwargs)
             c[k]=r
             saveCache(ms, c)
             return r
