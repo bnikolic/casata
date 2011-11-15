@@ -23,6 +23,13 @@ def saveCache(ms, d):
 
 def ordKw(kwl):
     return tuple([(k, kwl[k]) for k in kwl.keys()])
+
+def invFunc(ms, fname):
+    c=openCache(ms)
+    for k in c.keys():
+        if k[0]==fname:
+            c.pop(k)
+    saveCache(ms, c)
     
 def MSMemz(f):
     """

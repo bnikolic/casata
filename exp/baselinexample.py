@@ -25,9 +25,9 @@ def getPhases(caltable,
     Get phases for each scan in caltable  for antenna antno
     """
     s, g=data.cal(caltable, 
-                  ["FIELD_ID", "GAIN"], 
+                  ["SCAN_NUMBER", "GAIN"], 
                   a1=antno)
-    return s+1, cvPhase(g[0,0])
+    return s, cvPhase(g[0,0])
 
 @memoize.MSMemz
 def getPhasesAll(ms,
@@ -93,30 +93,25 @@ def baselineSolve(s, g, dc,
     """
     m=numpy.array([dc[x] for x in s])
     b=numpy.array(g)
-    x=numpy.linalg.lstsq(m, b)[0]
-    return x*wavel/(2*math.pi)
+    x=numpy.linalg.lstsq(m, b)
+    cc=wavel/(2*math.pi)
+    return x[0]*cc
 
 
 def baselineExample(msin, 
                     combine="scan", 
                     spw="0"):
-    print 'done gaincal'
     dc=scanDirCos(msin)
-    print '...done scanDirCos'
     wavel=3e8/data.chfspw(msin, int(spw)).mean()
-    print '...done wavel'
-
-    print '...going through each antenna'
-
     output_rotated=[0.0,0.0,0.0]
     antenna_list=[str(0)]
     aphases=getPhasesAll(msin,
                          combine=combine,
                          spw=spw)
-                         
     for a in range(1, data.nant(msin)):
-        s, p=getPhases("test.G", a)
-        res=baselineSolve(s, p, dc, wavel)
+        s, p=aphases[a]
+        res=baselineSolve(s, p, 
+                          dc, wavel)
         rotateres=antRotate(res)
         print '[%10.6f,%10.6f,%10.6f], #antenna=%i'%(
             rotateres[0],rotateres[1],rotateres[2], a)
