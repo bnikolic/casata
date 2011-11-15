@@ -27,11 +27,13 @@ def getPhases(caltable,
     s, g=data.cal(caltable, 
                   ["SCAN_NUMBER", "GAIN"], 
                   a1=antno)
+    if not s.any():
+        s=numpy.arange(1,len(s)+1)
     return s, cvPhase(g[0,0])
 
 @memoize.MSMemz
 def getPhasesAll(ms,
-                 combine="scan", 
+                 combine="", 
                  spw="0"):
     vtasks.gaincal(ms, 
                    "test.G", 
