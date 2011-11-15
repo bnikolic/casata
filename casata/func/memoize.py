@@ -22,7 +22,7 @@ def saveCache(ms, d):
     cPickle.dump(d, open(chName(ms), "w"))    
 
 def ordKw(kwl):
-    return [(k, kwl[k]) for k in kwl.keys()]
+    return tuple([(k, kwl[k]) for k in kwl.keys()])
     
 def MSMemz(f):
     """
