@@ -28,6 +28,21 @@ def getPhases(caltable,
                   ["FIELD_ID", "GAIN"], 
                   a1=antno)
     return s+1, cvPhase(g[0,0])
+
+@memoize.MSMemz
+def getPhasesAll(ms,
+                 combine="scan", 
+                 spw="0"):
+    vtasks.gaincal(ms, 
+                   "test.G", 
+                   spw=spw, 
+                   gaintype="G", 
+                   calmode="p", 
+                   combine=combine)
+    res=[]
+    for a in range(data.nant(ms)):
+        res.append(getPhases("test.G", a))
+    return res
     
 
 def calcDirCos(az, el):
@@ -82,13 +97,9 @@ def baselineSolve(s, g, dc,
     return x*wavel/(2*math.pi)
 
 
-def baselineExample(msin, combine="scan", spw="0"):
-    vtasks.gaincal(msin, 
-                   "test.G", 
-                   spw=spw, 
-                   gaintype="G", 
-                   calmode="p", 
-                   combine=combine)
+def baselineExample(msin, 
+                    combine="scan", 
+                    spw="0"):
     print 'done gaincal'
     dc=scanDirCos(msin)
     print '...done scanDirCos'
@@ -99,6 +110,10 @@ def baselineExample(msin, combine="scan", spw="0"):
 
     output_rotated=[0.0,0.0,0.0]
     antenna_list=[str(0)]
+    aphases=getPhasesAll(msin,
+                         combine=combine,
+                         spw=spw)
+                         
     for a in range(1, data.nant(msin)):
         s, p=getPhases("test.G", a)
         res=baselineSolve(s, p, dc, wavel)
