@@ -11,6 +11,7 @@ import numpy
 
 import casata, casata.tools
 from casata.tools import ctools, vtasks, calibration, data
+from casata.func import memoize
 
 def cvPhase(d):
     """
@@ -39,6 +40,7 @@ def calcDirCos(az, el):
             numpy.cos(az)*numpy.cos(el),
             numpy.sin(el))
 
+@memoize.MSMemz
 def scanDirCos(msin,
                warndrift=1e-2):
     """
