@@ -136,20 +136,17 @@ def baselineExample(msin,
                           flFirst(p), 
                           dc, 
                           wavel)
-        rotres[data.antname(msin, a)]=antRotate(res)
+        rotres[data.antname(msin, a)]=list(numpy.array(antRotate(res))*-1)
     return rotres
     
 def antRotate(res):
     """
-    This rotates the antenna solutions from the ENU (east-north) system
+    Rotates the antenna position offsets from ENU to the ECEF (Earth
+    Centered Earth Fixed) system as used by gencal
+
+    Takes in Antenna offset, length 3, returns list length 3. 
     
-    to the ECEF (Earth Centered Earth Fixed) system.
-
-    Takes in Antenna offset, length 3, returns list length 3
-
-    Although possibly could be an array of arrays?
-
-
+    (Sent in by Ed Fomalont)
     """
     rotateres = []
 
