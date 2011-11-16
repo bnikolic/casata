@@ -10,8 +10,8 @@ import math
 import numpy
 
 import casata, casata.tools
-from casta.tools import data
-from casta.tools.procd import getPhasesAll, scanDirCos(msin)
+from casata.tools import data
+from casata.tools.procd import getPhases, scanDirCos
 
 def baselineSolve(s, g, dc,
                   wavel):
@@ -48,14 +48,14 @@ def rewrap(pl):
     
 
 
-def baselineExample(msin, 
-                    spw="0"):
+def blCal(msin, 
+          spw="0"):
     dc=scanDirCos(msin)
     wavel=3e8/data.chfspw(msin, int(spw)).mean()
     output_rotated=[0.0,0.0,0.0]
     antenna_list=[str(0)]
-    aphases=getPhasesAll(msin,
-                         spw=spw)
+    aphases=getPhases(msin,
+                      spw=spw)
     rotres={}
     for a in range(1, data.nant(msin)):
         s, p=aphases[a]
