@@ -10,7 +10,7 @@ import math
 import numpy
 
 import casata, casata.tools
-from casata.tools import data
+from casata.tools import data, unwrap
 from casata.tools.procd import getPhases, scanDirCos
 
 def baselineSolve(s, g, dc,
@@ -36,16 +36,7 @@ def flFirst(p):
     return rewrap(p-p[0])
 
 def rewrap(pl):
-    res=[]
-    for p in pl:
-        if p> math.pi:
-            res.append(p-2*math.pi)
-        elif p < -math.pi:
-            res.append(p+2*math.pi)
-        else:
-            res.append(p)
-    return res
-    
+    return numpy.radians(unwrap.phase(numpy.degrees(pl), 180))
 
 
 def blCal(msin, 
