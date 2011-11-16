@@ -33,13 +33,15 @@ def getPhasesAnt(caltable,
 @memoize.MSMemz
 def getPhases(ms,
               combine="", 
-              spw="0"):
+              spw="0",
+              gaintabs=[]):
     vtasks.gaincal(ms, 
                    "test.G", 
                    spw=spw, 
                    gaintype="G", 
                    calmode="p", 
-                   combine=combine)
+                   combine=combine,
+                   gaintable=gaintabs)
     res=[]
     for a in range(data.nant(ms)):
         res.append(getPhasesAnt("test.G", a))
