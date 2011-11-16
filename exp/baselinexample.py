@@ -117,21 +117,15 @@ def baselineExample(msin,
     antenna_list=[str(0)]
     aphases=getPhasesAll(msin,
                          spw=spw)
+    rotres={}
     for a in range(1, data.nant(msin)):
         s, p=aphases[a]
         res=baselineSolve(s, 
                           flFirst(p), 
                           dc, 
                           wavel)
-        rotateres=antRotate(res)
-        print '[%10.6f,%10.6f,%10.6f], #antenna=%i'%(
-            rotateres[0],rotateres[1],rotateres[2], a)
-        #print "Offset of antenna %i is %s " % (a, str(res))
-        output_rotated.append(rotateres[0])
-        output_rotated.append(rotateres[1])
-        output_rotated.append(rotateres[2])
-        antenna_list.append(str(a))
-    return antenna_list, output_rotated
+        rotres[data.antname(msin, a)]=antRotate(res)
+    return rotres
     
 def antRotate(res):
     """
@@ -158,9 +152,9 @@ def antRotate(res):
     clong = numpy.cos(longitude)
 
     #Conversion to ECEF coordinate frame
-    rotateres.append (-res[0]*slong + res[1]*slat*clong - res[2]*clat*clong)
-    rotateres.append (-res[0]*clong - res[1]*slat*slong - res[2]*clat*slong)
-    rotateres.append (              - res[1]*clat       - res[2]*slat)
-    return rotateres
+    return [ -res[0]*slong + res[1]*slat*clong - res[2]*clat*clong,
+              -res[0]*clong - res[1]*slat*slong - res[2]*clat*slong,
+              -res[1]*clat       - res[2]*slat ]
+
                      
                      
