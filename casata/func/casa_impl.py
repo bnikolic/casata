@@ -30,8 +30,12 @@ def mkGenCalAP(antposl):
     """
     Turn antenna position list into the strange format gencal understands
     """
-    anames=",".join([x[0] for x in antposl])
-    apos=list(numpy.array([x[1] for x in antposl]).flatten())
+    if type(antposl)==list:
+        anames=",".join([x[0] for x in antposl])
+        apos=list(numpy.array([x[1] for x in antposl]).flatten())
+    elif type(antposl)==dict:
+        anames=",".join([x for x in antposl.keys()])
+        apos=list(numpy.array([antposl[x] for x in antposl.keys()]).flatten())
     return anames, apos
     
 
