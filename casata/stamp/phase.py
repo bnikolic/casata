@@ -10,7 +10,7 @@ import numpy
 import pylab
 
 import casata
-from casata.tools import data,  vtasks, unwrap
+from casata.tools import data,  vtasks, unwrap, procd
 
 import utils
 
@@ -59,3 +59,23 @@ def single(msin,
                                                          scan=scan)
     pylab.savefig(fnameout)
     return fnameout
+
+def scanA(msin, spw):
+    """
+    Plot antenna phases for each scan (e.g., to inspect a baseline
+    obervation run)
+    """
+    aphases=procd.getPhases(msin,
+                            spw=str(spw))
+    r=[]
+    for a in range(1, data.nant(msin)):
+        s, p=aphases[a]
+        pylab.clf()
+        pylab.scatter(s, p)
+        fnameout="o/phase-scanA-%s.png" % utils.dataselname(msin, 
+                                                            spw=spw, 
+                                                            a1=a, 
+                                                            a2=a)
+        pylab.savefig(fnameout)
+        r.append(fnameout)
+    return r
