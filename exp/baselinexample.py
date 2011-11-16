@@ -106,7 +106,19 @@ def baselineSolve(s, g, dc,
 
 def flFirst(p):
     "Filter the phases simply by removing from others the first value"
-    return p-p[0]
+    return rewrap(p-p[0])
+
+def rewrap(pl):
+    res=[]
+    for p in pl:
+        if p> math.pi:
+            res.append(p-2*math.pi)
+        elif p < -math.pi:
+            res.append(p+2*math.pi)
+        else:
+            res.append(p)
+    return res
+    
 
 
 def baselineExample(msin, 
