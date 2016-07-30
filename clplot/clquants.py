@@ -5,6 +5,13 @@ Closure quantities from visibility data
 import casac
 import numpy
 
+def rewrap(p):
+    """
+    Rewrap phase to conventional range. Necessary when, e.g.,
+    computing closure phase by adding phases
+    """
+    return numpy.arctan2(numpy.sin(p), numpy.cos(p))
+
 def closurePh(msname,
               alist,
               chan={},
@@ -39,7 +46,7 @@ def closurePh(msname,
                 p1=numpy.logical_and(a1==i, a2==j).nonzero()[0][0]
                 p2=numpy.logical_and(a1==i, a2==k).nonzero()[0][0]
                 p3=numpy.logical_and(a1==j, a2==k).nonzero()[0][0]
-                clp.append(ph[:,:,p1,:]*signs[0]+ph[:,:,p2,:]*signs[1]+ph[:,:,p3,:]*signs[2])
+                clp.append(rewrap(ph[:,:,p1,:]*signs[0]+ph[:,:,p2,:]*signs[1]+ph[:,:,p3,:]*signs[2]))
                 tr.append((i,j,k))
     return {"phase": numpy.array(clp),
             "tr": numpy.array(tr)}
