@@ -80,7 +80,7 @@ def closureAmp(msname,
                     a24=numpy.logical_and(a1==j, a2==l).nonzero()[0][0]                                
                     cla.append( aa[:,:,a12,:] * aa[:,:,a34,:] / (aa[:,:,a13,:] * aa[:,:,a24,:] ))
                     tr.append((i,j,k,l))    
-    return {"amp": numpy.array(cla),
-            "tr": numpy.array(tr)}
+    return {"amp": numpy.array(cla), # The closure amplitude
+            "quad": numpy.array(tr)} # Quad on which it was computed
             
 

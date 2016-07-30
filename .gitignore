@@ -1,0 +1,6 @@
+test/figures/*
+/test/*~
+/test/*.rst
+/test/docset.zip
+/clplot/*.pyc
+/test/*.html

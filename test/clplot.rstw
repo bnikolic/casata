@@ -1,0 +1,19 @@
+=========================================
+CLPLOT Examples & Tests
+=========================================
+
+Test
+
+<<>>=
+import clplot
+import clquants
+@
+
+
+<<width="800px">>=
+a=clquants.closureAmp("/home/bnikolic/n/casata/clplot/t1.ms/t1.ms.alma.cycle0.compact.ms", alist=[2,3,4,5])
+clplot.ampTime(a["amp"][0]); clplot.plt.show()
+@
+
+
+
