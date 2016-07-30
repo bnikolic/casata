@@ -9,11 +9,51 @@ import clplot
 import clquants
 @
 
+<<width="800px">>=
+p=clquants.closurePh("/home/bnikolic/n/casata/clplot/t1.ms/t1.ms.alma.cycle0.compact.ms", alist=[1,2,3,4])
+clplot.phaseM(p);clplot.plt.show()
+@
+
+<<width="800px">>=
+p=clquants.closurePh("/data/archive/HERA/HERAnoise3.HERA_14m_HEX.ms", alist=[1,2,3,4])
+clplot.phaseM(p);clplot.plt.show()
+@
 
 <<width="800px">>=
 a=clquants.closureAmp("/home/bnikolic/n/casata/clplot/t1.ms/t1.ms.alma.cycle0.compact.ms", alist=[2,3,4,5])
 clplot.ampTime(a["amp"][0]); clplot.plt.show()
 @
 
+
+Reproduce the Phase Closure Memo results
+========================================
+
+
+<<width="800px">>=
+p=clquants.closurePh("/fast/temp/casaclosure/1/21cm.H37.ms", alist=[1,2,6])
+clplot.phaseSpec(p["phase"][0]); clplot.plt.show()
+@
+
+<<width="800px">>=
+p=clquants.closurePh("/fast/temp/casaclosure/1/FOREGROUND.H37.ms", alist=[1,2,6])
+clplot.phaseSpec(p["phase"][0]); clplot.plt.show()
+@
+
+<<width="800px">>=
+p=clquants.closurePh("/fast/temp/casaclosure/1/FOREGROUND.H37.ms", alist=[1,3,12])
+clplot.phaseSpec(p["phase"][0]); clplot.plt.show()
+@
+
+<<width="800px">>=
+p=clquants.closurePh("/fast/temp/casaclosure/1/FOREGROUND.H37.ms", alist=[1,4,19])
+clplot.phaseSpec(p["phase"][0]); clplot.plt.show()
+@
+
+
+
+<<width="800px">>=
+p=clquants.closurePh("/fast/temp/casaclosure/1/FOREGROUND.H37-tavg-2.ms", alist=[1,4,19])
+clplot.phaseSpec(p["phase"][0]); clplot.plt.show()
+@
 
 

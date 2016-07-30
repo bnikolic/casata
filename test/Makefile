@@ -1,4 +1,4 @@
-PWs=   clplot.rstw
+PWs=   clplot.rstw heramemo13-repro.rstw
 RSTs=  $(PWs:.rstw=.rst)
 HTMLs= $(PWs:.rstw=.html)
 
@@ -35,4 +35,4 @@ docset.zip: html
 	zip -r $@ $^ figures
 
 clean:
-	rm $(RSTs) $(HTMLs)
+	rm -rf $(RSTs) $(HTMLs)  figures

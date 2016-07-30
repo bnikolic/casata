@@ -1,0 +1,33 @@
+==================================
+Reproducing Plots in HERA Memeo 13
+==================================
+
+This note reproduces the plots in HERA memo 13 (Carilli & Sims) just
+as a test of the new closure phase calculations.
+
+<<>>=
+import os
+
+import matplotlib.pylab as plt
+
+import casac
+import clplot
+import clquants
+
+
+datadir="/fast/temp/casaclosure/1"
+
+d_fg=os.path.join(datadir, "FOREGROUND.H37.ms")
+d_21=os.path.join(datadir, "21cm.H37.ms")
+d_comb=os.path.join(datadir, "21CM+FG.H37.ms")
+@
+
+
+<<width="800px">>=
+p=map(lambda msin: clquants.closurePh(msin, alist=[1,2,6]),
+      [d_fg, d_21, d_comb])
+plt.figure()
+map(lambda (i, pdata): plt.subplot(2,2, i) and clplot.phaseSpec(pdata["phase"][0]),
+    enumerate(p))
+plt.show()
+@
