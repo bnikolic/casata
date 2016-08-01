@@ -53,13 +53,44 @@ def closurePh(msname,
     if chan: ms.selectchannel(**chan)
     dd=ms.getdata(["antenna1", "antenna2", "phase"], ifraxis=True)
     ph=dd["phase"]
-    nant=len(alist)
     rows, tr=triads(dd["antenna1"],
                     dd["antenna2"], alist)
     clp=[]
     for p1,p2,p3 in rows:
         clp.append(rewrap(ph[:,:,p1,:]*signs[0]+ph[:,:,p2,:]*signs[1]+ph[:,:,p3,:]*signs[2]))
     return {"phase": numpy.array(clp),
+            "tr": numpy.array(tr)}
+
+def triangleArea(u1, v1, u2, v2, u3, v3):
+    "Area of triangle from vectors forming the three sides"
+    l1, l2, l3=map( lambda (x,y): numpy.sqrt(x**2+y**2),
+                   [ [u1, v1],
+                     [u2, v2],
+                     [u3, v3]])
+    p=0.5*(l1+l2+l3)
+    return numpy.sqrt(p*(p-l1)*(p-l2)*(p-l3))
+
+def triadArea(msname,
+              alist,
+              chan={}):
+    """
+    Compute area in uv plane of triads
+    """
+    ms=casac.casac.ms()
+    ms.open(msname)
+    ms.select({'antenna1': alist,
+               'antenna2': alist })
+    if chan: ms.selectchannel(**chan)
+    dd=ms.getdata(["antenna1", "antenna2", "u", "v"], ifraxis=True)
+    u,v =dd["u"], dd["v"]
+    rows, tr=triads(dd["antenna1"],
+                    dd["antenna2"], alist)
+    clp=[]
+    for p1,p2,p3 in rows:
+        clp.append(triangleArea(u[p1,:], v[p1,:],
+                                u[p2,:], v[p2,:],
+                                u[p3,:], v[p3,:]))
+    return {"area": numpy.array(clp),
             "tr": numpy.array(tr)}
 
 def closureAmp(msname,
