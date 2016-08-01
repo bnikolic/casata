@@ -1,0 +1,82 @@
+% CASA Closure Tests with simulated HERA data
+% Bojan Nikolic
+% 1 August 2016
+
+
+Closure tests
+=============
+
+Preliminaries
+-------------
+
+
+<<>>=
+import os
+
+import numpy
+import matplotlib.pylab as plt
+
+import casac
+import clplot
+import clquants
+
+
+datadir="/fast/temp/casaclosure/1"
+
+d_fg=os.path.join(datadir, "FOREGROUND.H37.ms")
+d_21=os.path.join(datadir, "21cm.H37.ms")
+d_comb=os.path.join(datadir, "21CM+FG.H37.ms")
+@
+
+
+<<caption="Histogram of the area of all triads in simulated HERA data">>=
+p=clquants.triadArea(d_fg, alist=list(range(36)))
+plt.hist(p["area"][numpy.isfinite(p["area"])], bins=30)
+plt.xlabel("uv area (wavelength^2)")
+plt.show()
+@
+
+Closure Phase -- as in Memo 13
+------------------------------
+
+This is for comparison to the HERA memo 13 of Carilli & Sims. 
+
+<<caption="Closure phase for simulated HERA data; blue line (not visible due to overplot by green) is the foreground only signal; green line is the 21cm only signal; green is the signal from combined 21cm signal and the foreground. ">>=
+def plotcomp(fl, tr):
+    p=map(lambda msin: clquants.closurePh(msin, alist=tr),
+          fl)
+    clplot.phaseSpec([x["phase"][0] for x in p])
+    plt.title("triad-%i-%i-%i" % tuple(tr))    
+    plt.show()
+plotcomp([d_fg, d_21, d_comb], [1,2,6])
+@
+
+Closure Amplitude 
+-----------------
+
+This is an initial result of the closure amplitude investigation. I've
+used files FOREGROUND.H37.ms, 21cm.H37.ms and 21CM+FG.H37.ms from
+Carilli's\&Sim's HERA simulation. I've selected two quads at without
+regard to area/orientation.
+
+
+<<caption="Closure amplitude on a quad; blue line (not visible due to overplot by green) is the foreground only signal; green line is the 21cm only signal; green is the signal from combined 21cm signal and the foreground.">>=
+p=map(lambda msin: clquants.closureAmp(msin, alist=[2,3,4,5]),
+      [d_fg, d_21, d_comb])
+plt.figure()
+for pp in p: clplot.ampSpec(pp["amp"][0])
+plt.title("quad-2-3-4-5")
+plt.show()
+@
+
+<<caption="Closure amplitude on a quad; blue line (not visible due to overplot by green) is the foreground only signal; green line is the 21cm only signal; green is the signal from combined 21cm signal and the foreground.">>=
+p=map(lambda msin: clquants.closureAmp(msin, alist=[6,7,8,9]),
+      [d_fg, d_21, d_comb])
+plt.figure()
+for pp in p: clplot.ampSpec(pp["amp"][0])
+plt.title("quad-%d-%d-%d-%d" % (6,7,8,9))
+plt.show()
+@
+
+
+

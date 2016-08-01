@@ -1,6 +1,7 @@
-PWs=   clplot.rstw heramemo13-repro.rstw
+PWs=   clplot.rstw heramemo13-repro.rstw hera-closure-tests.mdw
 RSTs=  $(PWs:.rstw=.rst)
 HTMLs= $(PWs:.rstw=.html)
+PDFs=  $(PWs:.mdw=.pdf)
 
 ifeq ($(OS),Windows_NT)
 	PWEAVE=pweave.bat
@@ -13,10 +14,19 @@ else
 endif
 
 .PHONY: default
-default: docset.zip
+default: docset.zip  ${PDFs}
 
 %.rst: %.rstw 
 	PYTHONPATH=${PPATH} ${PWEAVE} $<
+
+%.tex: %.rstw 
+	PYTHONPATH=${PPATH} ${PWEAVE} -f pandoc2latex $<
+
+%.tex: %.mdw
+	PYTHONPATH=${PPATH} ${PWEAVE} -f pandoc2latex $<
+
+%.pdf: %.tex
+	pdflatex $<
 
 %.html: %.rst
 	${RST2HTML} $(<:.rstw=.rst)  > $@
@@ -34,5 +44,3 @@ html: $(HTMLs)
 docset.zip: html
 	zip -r $@ $^ figures
 
-clean:
-	rm -rf $(RSTs) $(HTMLs)  figures

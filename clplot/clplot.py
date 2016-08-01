@@ -10,11 +10,20 @@ if matplotlib.__version__ > '1.4.0':
 
 #import pandas as pd
 
-
 def phaseSpec(d):
-    plt.plot(d[0,:,0])
+    if type(d) == list:
+        for x in d:
+            plt.plot(x[0,:,0])
+    else:
+        plt.plot(d[0,:,0])
     plt.ylabel("Closure phase (rad)")    
     plt.xlabel("Channel #")
+
+def ampSpec(d):
+    plt.plot(d[0,:,0])
+    plt.ylabel("Closure amplitude")    
+    plt.xlabel("Channel #")    
+
 
 def phaseTime(d):
     for i in range(d.shape[1]):

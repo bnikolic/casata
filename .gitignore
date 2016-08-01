@@ -4,3 +4,7 @@ test/figures/*
 /test/docset.zip
 /clplot/*.pyc
 /test/*.html
+/test/*.aux
+/test/*.log
+/test/*.out
+/test/*.pdf
