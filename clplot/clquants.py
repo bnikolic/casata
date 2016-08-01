@@ -12,6 +12,26 @@ def rewrap(p):
     """
     return numpy.arctan2(numpy.sin(p), numpy.cos(p))
 
+def triads(a1, a2, alist):
+    """
+    List of all triads in alist
+    """
+    if len(alist) < 3:
+        raise "Need at least three antennas to generate triads"
+    nant=len(alist)
+    rows=[]
+    tr=[]
+    for ni, i in enumerate(alist[:-2]):
+        for nj, j in enumerate(alist[ni+1:-1]):
+            for nk, k in enumerate(alist[ni+nj+2:]):
+                p1=numpy.logical_and(a1==i, a2==j).nonzero()[0][0]
+                p2=numpy.logical_and(a1==i, a2==k).nonzero()[0][0]
+                p3=numpy.logical_and(a1==j, a2==k).nonzero()[0][0]
+                rows.append( (p1, p2, p3) )
+                tr.append((i,j,k))
+    return rows, tr
+
+
 def closurePh(msname,
               alist,
               chan={},
@@ -26,28 +46,19 @@ def closurePh(msname,
     :param signs: The signs with which to combine the phases
 
     """
-    if len(alist) < 3:
-        raise "Need three antennas for closure phase"
     ms=casac.casac.ms()
     ms.open(msname)
     ms.select({'antenna1': alist,
                'antenna2': alist })
     if chan: ms.selectchannel(**chan)
     dd=ms.getdata(["antenna1", "antenna2", "phase"], ifraxis=True)
-    a1=dd["antenna1"]
-    a2=dd["antenna2"]
     ph=dd["phase"]
     nant=len(alist)
+    rows, tr=triads(dd["antenna1"],
+                    dd["antenna2"], alist)
     clp=[]
-    tr=[]
-    for ni, i in enumerate(alist[:-2]):
-        for nj, j in enumerate(alist[ni+1:-1]):
-            for nk, k in enumerate(alist[ni+nj+2:]):
-                p1=numpy.logical_and(a1==i, a2==j).nonzero()[0][0]
-                p2=numpy.logical_and(a1==i, a2==k).nonzero()[0][0]
-                p3=numpy.logical_and(a1==j, a2==k).nonzero()[0][0]
-                clp.append(rewrap(ph[:,:,p1,:]*signs[0]+ph[:,:,p2,:]*signs[1]+ph[:,:,p3,:]*signs[2]))
-                tr.append((i,j,k))
+    for p1,p2,p3 in rows:
+        clp.append(rewrap(ph[:,:,p1,:]*signs[0]+ph[:,:,p2,:]*signs[1]+ph[:,:,p3,:]*signs[2]))
     return {"phase": numpy.array(clp),
             "tr": numpy.array(tr)}
 
