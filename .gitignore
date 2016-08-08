@@ -8,3 +8,4 @@ test/figures/*
 /test/*.log
 /test/*.out
 /test/*.pdf
+/clplot/clplot/*~
