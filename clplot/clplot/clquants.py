@@ -7,14 +7,19 @@ import numpy
 
 def rewrap(p):
     """
-    Rewrap phase to conventional range. Necessary when, e.g.,
-    computing closure phase by adding phases
+    Rewrap phase so that branch cut is along the negative real axis.
     """
     return numpy.arctan2(numpy.sin(p), numpy.cos(p))
 
 def triads(a1, a2, alist):
     """
-    List of all triads in alist
+    List all triads
+    
+    :param a1, a2: Arrays with antenna IDs for first and second antenna
+    :param alist:  List of antenna IDs for which to generate the triads
+
+    :returns: Tuple of (list of (tuple containing rows with data in the triad)), 
+              (list of tuples contianing antenna IDs in the triad)
     """
     if len(alist) < 3:
         raise "Need at least three antennas to generate triads"
@@ -74,7 +79,10 @@ def triadArea(msname,
               alist,
               chan={}):
     """
-    Compute area in uv plane of triads
+    Compute the area in the uv plane of all triads formed by antenna IDs
+    alist
+
+    Area is calculated on the projection on the uv plane, so w is ignored
     """
     ms=casac.casac.ms()
     ms.open(msname)

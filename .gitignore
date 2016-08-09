@@ -13,3 +13,4 @@ test/figures/*
 clplot/dist
 clplot/clplot.egg-info/
 /clplot/*~
+clplot/doc/_build/
