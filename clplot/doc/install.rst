@@ -1,11 +1,21 @@
 Installation
 ============
 
+Configuration
++++++++++++++
+
 CLPLOT installs itself into your CASA distribution. I have only tested
 it with CASA tar balls. You need to specify where CASA has been
-unpacked, e.g.::
+unpacked by setting a shell variable. For example, on my computer I
+paste the following into the shell::
 
   export CASADIR=/data/p/casa-release-4.6.0-el6
+
+This has to be done in shell used to execute any of the other commands
+in this section.
+
+Installation
+++++++++++++
 
 At first installation into new CASA we need to setup PIP::
 
@@ -20,7 +30,10 @@ Then install clplot::
 
 Note that https://www.mrao.cam.ac.uk/~bn204/soft/py is the remote
 software repository from which clplot will be downloaded
-  
+
+Un-installation
++++++++++++++++
+
 To uninstall clplot::
 
   ${CASADIR:? must be set}/bin/pip uninstall clplot

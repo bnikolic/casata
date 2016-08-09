@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='clplot',
-      version='0.0.1',
+      version='0.0.2',
       description='Closure Plotting',
 #      url='http://github.com/storborg/funniest',
       author='Bojan Nikolic',

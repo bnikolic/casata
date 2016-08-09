@@ -13,6 +13,11 @@ if matplotlib.__version__ > '1.4.0':
 #import pandas as pd
 
 def twrap(t):
+    """
+    Wrap long text with new lines
+    
+    :returns: String without any long lines
+    """
     return "\n".join(textwrap.wrap(t))
 
 def phaseSpec(d, tr=False):
