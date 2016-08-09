@@ -9,3 +9,7 @@ test/figures/*
 /test/*.out
 /test/*.pdf
 /clplot/clplot/*~
+/clplot/clplot/*.pyc
+clplot/dist
+clplot/clplot.egg-info/
+/clplot/*~
