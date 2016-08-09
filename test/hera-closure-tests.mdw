@@ -1,6 +1,6 @@
 % CASA Closure Tests with simulated HERA data
 % Bojan Nikolic
-% 1 August 2016
+% 9 August 2016
 
 
 Closure tests
@@ -13,13 +13,10 @@ Preliminaries
 <<>>=
 import os
 
-import numpy
 import matplotlib.pylab as plt
 
-import casac
 import clplot
 import clquants
-
 
 datadir="/fast/temp/casaclosure/1"
 
@@ -59,27 +56,21 @@ regard to area/orientation.
 
 
 <<caption="Closure amplitude on a quad. Upper panel shows the  total signals for three models: blue line (not visible due to overplot by green) is the foreground only signal; green line is the 21cm only signal; green is the signal from combined 21cm signal and the foreground. Lower panel shows the difference between combined 21cm and foreground signal on one hand and the 21cm signal only on the other hand">>=
-p=map(lambda msin: clquants.closureAmp(msin, alist=[2,3,4,5]),
-      [d_fg, d_21, d_comb])
-plt.subplot(211)
-for pp in p: clplot.ampSpec(pp["amp"][0])
-plt.title("quad-2-3-4-5")
-plt.subplot(212)
-clplot.ampSpec(p[2]["amp"][0]- p[0]["amp"][0])
-plt.title("quad-2-3-4-5: Difference between combined 21+foreground and foreground only signal ")
-plt.show()
+def plotacomp(fl, qd):
+    p=map(lambda msin: clquants.closureAmp(msin, alist=qd),
+	  fl)
+    plt.subplot(211)
+    clplot.ampSpec([pp["amp"][0] for pp in p], qd=qd)
+    plt.subplot(212)
+    clplot.ampSpec(p[2]["amp"][0]- p[0]["amp"][0])
+    plt.title(clplot.twrap("quad-%i-%i-%i-%i: Difference between the combined 21+foreground and the foreground-only signal " % tuple(qd) ))
+    plt.tight_layout()
+    plt.show()
+plotacomp([d_fg, d_21, d_comb],  [2,3,4,5])
 @
 
 <<caption="Closure amplitude on a quad; panels and lines as in the previous figure.">>=
-p=map(lambda msin: clquants.closureAmp(msin, alist=[6,7,8,9]),
-      [d_fg, d_21, d_comb])
-plt.subplot(211)
-for pp in p: clplot.ampSpec(pp["amp"][0])
-plt.title("quad-%d-%d-%d-%d" % (6,7,8,9))
-plt.subplot(212)
-clplot.ampSpec(p[2]["amp"][0]- p[0]["amp"][0])
-plt.title("Difference between combined 21+foreground and foreground only signal ")
-plt.show()
+plotacomp([d_fg, d_21, d_comb],  [6,7,8,9])
 @
 
 

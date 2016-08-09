@@ -69,7 +69,9 @@ def closurePh(msname,
             "tr": numpy.array(tr)}
 
 def triangleArea(u1, v1, u2, v2, u3, v3):
-    "Area of triangle from vectors forming the three sides"
+    """
+    Area of a triangle calculated from the vectors forming its sides
+    """
     l1, l2, l3=map( lambda (x,y): numpy.sqrt(x**2+y**2),
                    [ [u1, v1],
                      [u2, v2],
@@ -90,10 +92,10 @@ def triadArea(msname,
     :param alist:  List of antenna IDs
 
     :param chan: Dictionary with channel averaging specification. See
-    the syntax for ms.selectchannel.
+                 the syntax for ms.selectchannel.
 
-    :returns: Dictionary with array of areas and triads that does
-    areas correspond to
+    :returns: Dictionary with array of areas and triads that does areas correspond to
+
     """
     ms=casac.casac.ms()
     ms.open(msname)

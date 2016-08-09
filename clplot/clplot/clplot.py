@@ -2,6 +2,7 @@
 Closure phase plotting
 """
 
+import textwrap
 import numpy
 import matplotlib
 import matplotlib.pylab as plt
@@ -11,11 +12,14 @@ if matplotlib.__version__ > '1.4.0':
 
 #import pandas as pd
 
+def twrap(t):
+    return "\n".join(textwrap.wrap(t))
+
 def phaseSpec(d, tr=False):
-    """Plot closure phases on a signle triad
+    """Plot closure phases vs frequency on a triad 
 
     :param d: Phases to plot. If a list then multiple phases are
-    over-plotted
+              over-plotted
 
     :param tr: Tuple representing the triad. Used to title the plot
 
@@ -30,10 +34,18 @@ def phaseSpec(d, tr=False):
     if tr:
         plt.title("Closure phase on triad %i-%i-%i" % tuple(tr))
 
-def ampSpec(d):
-    plt.plot(d[0,:,0])
+def ampSpec(d, qd=False):
+    """Plot closure amplitude vs frequency on a quad
+    """
+    if type(d) == list:
+        for x in d:
+            plt.plot(x[0,:,0])
+    else:
+        plt.plot(d[0,:,0])
     plt.ylabel("Closure amplitude")    
-    plt.xlabel("Channel #")    
+    plt.xlabel("Channel #")
+    if qd:
+        plt.title("Closure amplitude vs frequency on quad %i-%i-%i-%i" % tuple(qd))
 
 
 def phaseTime(d):
@@ -63,7 +75,7 @@ def areaHist(d, bins=30):
     in a triad
 
     :param d: Dictionary of values. Value "area" is used. E.g. as
-    produced by clquants.triadArea
+              produced by clquants.triadArea
 
     """
     d=d["area"]
