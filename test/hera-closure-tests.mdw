@@ -31,8 +31,7 @@ d_comb=os.path.join(datadir, "21CM+FG.H37.ms")
 
 <<caption="Histogram of the area of all triads in simulated HERA data">>=
 p=clquants.triadArea(d_fg, alist=list(range(36)))
-plt.hist(p["area"][numpy.isfinite(p["area"])], bins=30)
-plt.xlabel("uv area (wavelength^2)")
+clplot.areaHist(p)
 plt.show()
 @
 

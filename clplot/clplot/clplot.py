@@ -2,6 +2,7 @@
 Closure phase plotting
 """
 
+import numpy
 import matplotlib
 import matplotlib.pylab as plt
 if matplotlib.__version__ > '1.4.0':
@@ -44,6 +45,24 @@ def phaseM(d, nside=3):
         #phaseSpec(d["phase"][t])
         phaseTime(d["phase"][t])        
         plt.title("triad-%i-%i-%i" % tuple(d["tr"][t]))
+
+def areaHist(d, bins=30):
+    """Plot histogram of areas of triads
+
+    Filters non-finite area values, e.g., due to co-linear baselines
+    in a triad
+
+    :param d: Dictionary of values. Value "area" is used. E.g. as
+    produced by clquants.triadArea
+
+    """
+    d=d["area"]
+    m=numpy.isfinite(d)
+    plt.hist(d[m], bins=bins)
+    plt.xlabel("area in the uv plane (wavelength^2)")
+    plt.ylabel("Number of distinct triads")
+    plt.title("Histogram of the uv-pane areas of triads")
+    
     
              
 
