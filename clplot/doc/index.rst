@@ -11,9 +11,15 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+clplot -- the plotting module
+-----------------------------
+
 .. automodule:: clplot
    :members:
    :undoc-members:
+
+clquants -- the computation module
+----------------------------------
 
 .. automodule:: clquants
    :members:

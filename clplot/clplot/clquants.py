@@ -50,6 +50,8 @@ def closurePh(msname,
     
     :param signs: The signs with which to combine the phases
 
+    :returns: Dictionary with an array containing phases and an array with the triad ids
+
     """
     ms=casac.casac.ms()
     ms.open(msname)
@@ -78,11 +80,20 @@ def triangleArea(u1, v1, u2, v2, u3, v3):
 def triadArea(msname,
               alist,
               chan={}):
-    """
-    Compute the area in the uv plane of all triads formed by antenna IDs
+    """Compute the area in the uv plane of all triads formed by antenna IDs
     alist
 
     Area is calculated on the projection on the uv plane, so w is ignored
+
+    :param msname: Input measurement set
+
+    :param alist:  List of antenna IDs
+
+    :param chan: Dictionary with channel averaging specification. See
+    the syntax for ms.selectchannel.
+
+    :returns: Dictionary with array of areas and triads that does
+    areas correspond to
     """
     ms=casac.casac.ms()
     ms.open(msname)

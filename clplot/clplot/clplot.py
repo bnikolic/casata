@@ -11,7 +11,15 @@ if matplotlib.__version__ > '1.4.0':
 
 #import pandas as pd
 
-def phaseSpec(d):
+def phaseSpec(d, tr=False):
+    """Plot closure phases on a signle triad
+
+    :param d: Phases to plot. If a list then multiple phases are
+    over-plotted
+
+    :param tr: Tuple representing the triad. Used to title the plot
+
+    """
     if type(d) == list:
         for x in d:
             plt.plot(x[0,:,0])
@@ -19,6 +27,8 @@ def phaseSpec(d):
         plt.plot(d[0,:,0])
     plt.ylabel("Closure phase (rad)")    
     plt.xlabel("Channel #")
+    if tr:
+        plt.title("Closure phase on triad %i-%i-%i" % tuple(tr))
 
 def ampSpec(d):
     plt.plot(d[0,:,0])

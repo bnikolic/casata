@@ -44,8 +44,7 @@ This is for comparison to the HERA memo 13 of Carilli & Sims.
 def plotcomp(fl, tr):
     p=map(lambda msin: clquants.closurePh(msin, alist=tr),
           fl)
-    clplot.phaseSpec([x["phase"][0] for x in p])
-    plt.title("triad-%i-%i-%i" % tuple(tr))    
+    clplot.phaseSpec([x["phase"][0] for x in p], tr=tr)
     plt.show()
 plotcomp([d_fg, d_21, d_comb], [1,2,6])
 @
