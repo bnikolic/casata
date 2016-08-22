@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    install
+   channelspec
 
 clplot -- the plotting module
 -----------------------------
@@ -19,6 +20,8 @@ clplot -- the plotting module
 .. automodule:: clplot
    :members:
    :undoc-members:
+
+      
 
 clquants -- the computation module
 ----------------------------------
