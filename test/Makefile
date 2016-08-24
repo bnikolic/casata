@@ -9,7 +9,7 @@ ifeq ($(OS),Windows_NT)
 	RST2HTML="python.exe" "C:\Users\Bojan\Anaconda\Scripts\rst2html.py"
 else
 	PWEAVE=/data/p/casa-release-4.6.0-el6/bin/pweave
-	PPATH=../clplot/clplot:${PYTHONPATH}
+	PPATH=../clplot/:${PYTHONPATH}
 	RST2HTML=/data/p/casa-release-4.6.0-el6/bin/rst2html5
 endif
 

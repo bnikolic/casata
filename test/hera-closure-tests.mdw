@@ -15,8 +15,7 @@ import os
 
 import matplotlib.pylab as plt
 
-import clplot
-import clquants
+from clplot import clplot, clquants
 
 datadir="/fast/temp/casaclosure/1"
 
