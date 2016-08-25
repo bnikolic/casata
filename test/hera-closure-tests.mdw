@@ -16,6 +16,7 @@ import os
 import matplotlib.pylab as plt
 
 from clplot import clplot, clquants
+from heraanalysis import *
 
 datadir="/fast/temp/casaclosure/1"
 
@@ -73,4 +74,9 @@ plotacomp([d_fg, d_21, d_comb],  [6,7,8,9])
 @
 
 
+Export data
+-----------
 
+<<>>=
+comparableAmps({"21cm" : d_21, "foreground" : d_fg, "combined" : d_comb}, [2,3,4,5], "test.csv")
+@

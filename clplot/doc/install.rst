@@ -21,7 +21,11 @@ At first installation into new CASA we need to setup PIP::
 
   wget https://bootstrap.pypa.io/get-pip.py
   ${CASADIR:? must be set}/bin/python get-pip.py
-  ${CASADIR}/bin/pip2.7 install --upgrade setuptools  
+  ${CASADIR}/bin/pip2.7 install --upgrade setuptools
+  # For input/output of tables etc
+  ${CASADIR}/bin/pip2.7 install --upgrade pandas
+  # Needed for correct histograms, etc
+  ${CASADIR}/bin/pip2.7 install --upgrade matplotlib
 
 Then install clplot::
 
