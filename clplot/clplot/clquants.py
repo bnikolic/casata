@@ -11,44 +11,56 @@ def rewrap(p):
     """
     return numpy.arctan2(numpy.sin(p), numpy.cos(p))
 
+def eitherWay(a1, a2, i, j):
+    """Return rows where a1==i and a2==j OR a1==j and a2==i. Also return
+    sign +1 if former or -1 if latter.
+
+    """
+    r1=numpy.logical_and(a1==i, a2==j).nonzero()[0]
+    if r1.shape[0]:
+        return r1[0], +1.0
+    else:
+        return numpy.logical_and(a1==j, a2==i).nonzero()[0][0], -1.0
+
 def triads(a1, a2, alist):
     """
-    List all triads
+    List the rows corresponding to all triads in alist
     
     :param a1, a2: Arrays with antenna IDs for first and second antenna
     :param alist:  List of antenna IDs for which to generate the triads
 
     :returns: Tuple of (list of (tuple containing rows with data in the triad)), 
-              (list of tuples contianing antenna IDs in the triad)
+              (list of tuples contianing antenna IDs in the triad),
+              (list of signs to be used in computing a closure phase)
+
     """
     if len(alist) < 3:
         raise "Need at least three antennas to generate triads"
     nant=len(alist)
     rows=[]
     tr=[]
+    signs=[]
     for ni, i in enumerate(alist[:-2]):
         for nj, j in enumerate(alist[ni+1:-1]):
             for nk, k in enumerate(alist[ni+nj+2:]):
-                p1=numpy.logical_and(a1==i, a2==j).nonzero()[0][0]
-                p2=numpy.logical_and(a1==i, a2==k).nonzero()[0][0]
-                p3=numpy.logical_and(a1==j, a2==k).nonzero()[0][0]
+                p1,s1=eitherWay(a1, a2, i, j)
+                p2,s2=eitherWay(a1, a2, j, k)
+                p3,s3=eitherWay(a1, a2, k, i)
                 rows.append( (p1, p2, p3) )
                 tr.append((i,j,k))
-    return rows, tr
+                signs.append( (s1, s2, s3))
+    return rows, tr, signs
 
 
 def closurePh(msname,
               alist,
-              chan={},
-              signs=[1, -1 , 1]):
+              chan={}):
     """
     The closure phase on a triad of antennas
 
     :param alist: The three antennas to compute the closure 
 
     :param chan: channel averaging (see ms.selectchannel)
-    
-    :param signs: The signs with which to combine the phases
 
     :returns: Dictionary with an array containing phases and an array with the triad ids
 
@@ -58,13 +70,15 @@ def closurePh(msname,
     ms.select({'antenna1': alist,
                'antenna2': alist })
     if chan: ms.selectchannel(**chan)
+    # Note the use of ifraxis. This means time and interfoerometer
+    # number are separate dimensions in the returned data
     dd=ms.getdata(["antenna1", "antenna2", "phase"], ifraxis=True)
     ph=dd["phase"]
-    rows, tr=triads(dd["antenna1"],
-                    dd["antenna2"], alist)
+    rows, tr, signs=triads(dd["antenna1"],
+                           dd["antenna2"], alist)
     clp=[]
-    for p1,p2,p3 in rows:
-        clp.append(rewrap(ph[:,:,p1,:]*signs[0]+ph[:,:,p2,:]*signs[1]+ph[:,:,p3,:]*signs[2]))
+    for (p1,p2,p3), (s1,s2,s3) in zip(rows,signs):
+        clp.append(rewrap(ph[:,:,p1,:]*s1+ph[:,:,p2,:]*s2+ph[:,:,p3,:]*s3))
     return {"phase": numpy.array(clp),
             "tr": numpy.array(tr)}
 
