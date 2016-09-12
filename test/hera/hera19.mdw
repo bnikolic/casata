@@ -1,0 +1,30 @@
+% CASA Closure Tests HERA 19 
+% Bojan Nikolic
+% 12 September 2016
+
+
+Hera 19
+=======
+
+Preliminaries
+-------------
+
+
+<<>>=
+import os
+
+import matplotlib.pylab as plt
+
+from clplot import clplot, clquants
+from heraanalysis import *
+
+msin="/fast/temp/casaclosure2/CygA.ms"
+
+@
+
+<<caption="Histogram of the area of all triads in simulated HERA data">>=
+p=clquants.triadArea(msin)
+clplot.areaHist(p)
+plt.show()
+@
+
