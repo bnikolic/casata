@@ -22,6 +22,18 @@ def eitherWay(a1, a2, i, j):
     else:
         return numpy.logical_and(a1==j, a2==i).nonzero()[0][0], -1.0
 
+def triadRows(a1, a2, tr):
+    """
+    Rows corresponding to single triad tr
+    """
+    i,j,k=tr
+    p1,s1=eitherWay(a1, a2, i, j)
+    p2,s2=eitherWay(a1, a2, j, k)
+    p3,s3=eitherWay(a1, a2, k, i)
+    return ( (p1, p2, p3),
+             (s1, s2, s3))
+
+
 def triads(a1, a2, alist):
     """
     List the rows corresponding to all triads in alist
@@ -43,9 +55,8 @@ def triads(a1, a2, alist):
     for ni, i in enumerate(alist[:-2]):
         for nj, j in enumerate(alist[ni+1:-1]):
             for nk, k in enumerate(alist[ni+nj+2:]):
-                p1,s1=eitherWay(a1, a2, i, j)
-                p2,s2=eitherWay(a1, a2, j, k)
-                p3,s3=eitherWay(a1, a2, k, i)
+                ( (p1, p2, p3),
+                  (s1, s2, s3)) = triadRows(a1, a2, (i,j,k))
                 rows.append( (p1, p2, p3) )
                 tr.append((i,j,k))
                 signs.append( (s1, s2, s3))
@@ -73,6 +84,7 @@ def closurePh(msname,
     # Note the use of ifraxis. This means time and interfoerometer
     # number are separate dimensions in the returned data
     dd=ms.getdata(["antenna1", "antenna2", "phase"], ifraxis=True)
+    ms.close()
     ph=dd["phase"]
     rows, tr, signs=triads(dd["antenna1"],
                            dd["antenna2"], alist)
@@ -81,6 +93,7 @@ def closurePh(msname,
         clp.append(rewrap(ph[:,:,p1,:]*s1+ph[:,:,p2,:]*s2+ph[:,:,p3,:]*s3))
     return {"phase": numpy.array(clp),
             "tr": numpy.array(tr)}
+
 
 def triangleArea(u1, v1, u2, v2, u3, v3):
     """
