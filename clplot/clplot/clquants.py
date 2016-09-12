@@ -94,7 +94,7 @@ def triangleArea(u1, v1, u2, v2, u3, v3):
     return numpy.sqrt(p*(p-l1)*(p-l2)*(p-l3))
 
 def triadArea(msname,
-              alist,
+              alist=None,
               chan={}):
     """Compute the area in the uv plane of all triads formed by antenna IDs
     alist
@@ -103,7 +103,8 @@ def triadArea(msname,
 
     :param msname: Input measurement set
 
-    :param alist:  List of antenna IDs
+    :param alist: List of antenna IDs. If none is supplied all
+    antennas are considered
 
     :param chan: Dictionary with channel averaging specification. See
                  the syntax for ms.selectchannel.
@@ -113,13 +114,17 @@ def triadArea(msname,
     """
     ms=casac.casac.ms()
     ms.open(msname)
+    if alist is None:
+        aa=ms.getdata(["antenna1", "antenna2"])
+        aa=numpy.append(aa["antenna1"],aa["antenna2"])
+        alist=numpy.unique(aa)
     ms.select({'antenna1': alist,
                'antenna2': alist })
     if chan: ms.selectchannel(**chan)
     dd=ms.getdata(["antenna1", "antenna2", "u", "v"], ifraxis=True)
     u,v =dd["u"], dd["v"]
-    rows, tr=triads(dd["antenna1"],
-                    dd["antenna2"], alist)
+    rows, tr, signs=triads(dd["antenna1"],
+                           dd["antenna2"], alist)
     clp=[]
     for p1,p2,p3 in rows:
         clp.append(triangleArea(u[p1,:], v[p1,:],
