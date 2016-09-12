@@ -130,7 +130,8 @@ def triadArea(msname,
         clp.append(triangleArea(u[p1,:], v[p1,:],
                                 u[p2,:], v[p2,:],
                                 u[p3,:], v[p3,:]))
-    return {"area": numpy.array(clp),
+    # The area for first itegration only is returned
+    return {"area": numpy.array(clp)[:,0],
             "tr": numpy.array(tr)}
 
 def closureAmp(msname,
