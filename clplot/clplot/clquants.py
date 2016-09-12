@@ -94,6 +94,31 @@ def closurePh(msname,
     return {"phase": numpy.array(clp),
             "tr": numpy.array(tr)}
 
+def closurePhTriads(msname,
+                    triadlist,
+                    chan={}):
+    """Closure phase on specified trads
+
+    Unlike closurePh specific triads are taken and used in the order
+    given
+
+    """
+    ms=casac.casac.ms()
+    ms.open(msname)
+    if chan: ms.selectchannel(**chan)
+    # Note the use of ifraxis. This means time and interfoerometer
+    # number are separate dimensions in the returned data
+    dd=ms.getdata(["antenna1", "antenna2", "phase"], ifraxis=True)
+    ph=dd["phase"]; a1=dd["antenna1"]; a2=dd["antenna2"]
+    ms.close()
+    res=[]
+    for tr in triadlist:
+        ( (p1, p2, p3),
+          (s1, s2, s3)) = triadRows(a1, a2, tr)
+        phr=rewrap(ph[:,:,p1,:]*s1+ph[:,:,p2,:]*s2+ph[:,:,p3,:]*s3)
+        res.append(phr)
+    return numpy.array(res)
+
 
 def triangleArea(u1, v1, u2, v2, u3, v3):
     """
