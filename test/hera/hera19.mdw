@@ -1,6 +1,6 @@
-% CASA Closure Tests HERA 19 
+% CASA Closure Tests HERA 19  -- v0.1
 % Bojan Nikolic
-% 12 September 2016
+% 12 September 2016 
 
 
 Hera 19
@@ -9,9 +9,14 @@ Hera 19
 Preliminaries
 -------------
 
+I'm looking at the CygA dataset, observed 09-Jun-2016/00:51:26.7 -
+01:01:28.0. To reproduce Chris' results I've averaged to three minutes
+using CASA split.
+
 
 <<>>=
 import os
+import numpy
 
 import matplotlib.pylab as plt
 
@@ -20,11 +25,72 @@ from heraanalysis import *
 
 msin="/fast/temp/casaclosure2/CygA.ms"
 
-@
+# Created a time averaged dat st
+# split(msin, '/fast/temp/casaclosure2/CygA-timeavg.ms', datacolumn="all",  timebin='185s')
+msavg='/fast/temp/casaclosure2/CygA-timeavg.ms'
 
+@
 <<caption="Histogram of the area of all triads in simulated HERA data">>=
 p=clquants.triadArea(msin)
 clplot.areaHist(p)
 plt.show()
 @
+
+Thing to note: lots of triads with the same (small) areas, not all equilateral triangles.
+
+Plot of one triad
+-----------------
+
+For initial test look at one triad only. I'm using triad 22, 9, 20 in
+CASA notation (add one to get to Chris' numbers). I'm plotting versus
+both frequency (horizontal axis) and time (different colours).
+
+<<>>=
+
+
+trset=[ [22, 9, 20] ]
+
+@
+<<caption="Closure Phase on triad 22-9-20 as function of frequency. The different traces correspond to different 3-minute integrations">>=
+xx=clquants.closurePhTriads(msavg, trset)
+
+for i in range(len(trset)):
+   # Dont plot last one because it won't be have as much data averaged into it
+	plt.plot(xx[i,0,:,0:-1])
+plt.show()
+@
+
+
+
+
+Whole triad set
+---------------
+
+Next I've looked at the following equilateral triangles entered by hand. 
+
+<<>>=
+trset=[ [72, 22, 105],
+[112, 81, 22],
+[97, 10, 81],
+[105, 9, 88],
+[22, 20, 9],
+[81, 89, 20],
+[10, 43, 89],
+[9, 64, 88],
+[9, 53, 64],
+[20, 53, 9],
+[20, 31, 53],
+[89, 31, 20],
+[89, 65, 31],
+[43, 65, 89],
+[64, 53, 80]]
+@
+<<caption="Closure Phase on all above triads  as function of frequency. The different traces correspond to different triads">>=
+xx=clquants.closurePhTriads(msavg, trset)
+
+for i in range(len(trset)):
+	plt.plot(xx[i,0,:,-2])
+plt.show()
+@
+
 
