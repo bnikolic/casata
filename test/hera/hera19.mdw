@@ -46,10 +46,7 @@ CASA notation (add one to get to Chris' numbers). I'm plotting versus
 both frequency (horizontal axis) and time (different colours).
 
 <<>>=
-
-
-trset=[ [22, 9, 20] ]
-
+trset=[ [22, 9, 20]]
 @
 <<caption="Closure Phase on triad 22-9-20 as function of frequency. The different traces correspond to different 3-minute integrations">>=
 xx=clquants.closurePhTriads(msavg, trset)
@@ -61,31 +58,11 @@ plt.show()
 @
 
 
-
-
-Whole triad set
----------------
-
-Next I've looked at the following equilateral triangles entered by hand. 
-
 <<>>=
-trset=[ [72, 22, 105],
-[112, 81, 22],
-[97, 10, 81],
-[105, 9, 88],
-[22, 20, 9],
-[81, 89, 20],
-[10, 43, 89],
-[9, 64, 88],
-[9, 53, 64],
-[20, 53, 9],
-[20, 31, 53],
-[89, 31, 20],
-[89, 65, 31],
-[43, 65, 89],
-[64, 53, 80]]
+trset=[ [22, 9, 20], [9, 20, 53] ]
 @
-<<caption="Closure Phase on all above triads  as function of frequency. The different traces correspond to different triads">>=
+<<caption="Comparison of redundant triangles that agree well: 22-9-20 and 9-20-53">>=
+
 xx=clquants.closurePhTriads(msavg, trset)
 
 for i in range(len(trset)):
@@ -93,4 +70,36 @@ for i in range(len(trset)):
 plt.show()
 @
 
+<<>>=
+trset=[ [22, 9, 20], [81, 22, 20], [81, 20, 89]  ]
+@
+<<caption="Comparison of reundant triangles that do not agree: 22-9-20, 81-22-20 and 81-20-89">>=
+
+xx=clquants.closurePhTriads(msavg, trset)
+
+for i in range(len(trset)):
+	plt.plot(xx[i,0,:,-2])
+plt.show()
+@
+
+
+
+
+
+<<>>=
+trset=[ [72, 22, 105], [105, 9, 88], [22, 20, 9], [10, 43, 89],
+[9, 53, 64], [20, 31, 53], [89, 65, 31], [53, 104, 80], [31, 96, 104]]
+
+trset=[ [105, 9, 88], [22, 20, 9], [10, 43, 89],
+[9, 53, 64], [20, 31, 53],  [53, 104, 80], [31, 96, 104]]
+
+@
+<<caption="Comparison of redundant triangles from memo">>=
+
+xx=clquants.closurePhTriads(msavg, trset)
+
+for i in range(len(trset)):
+	plt.plot(xx[i,0,:,-2])
+plt.show()
+@
 
