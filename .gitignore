@@ -14,3 +14,11 @@ clplot/dist
 clplot/clplot.egg-info/
 /clplot/*~
 clplot/doc/_build/
+/test/hera/figures
+/test/hera/*.aux
+/test/hera/*.log
+/test/hera/*.out
+/test/hera/*.pdf
+/test/hera/*.scratch
+/clplot/*.log
+/clplot/doc/*~
