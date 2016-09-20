@@ -117,6 +117,24 @@ def phTriads(msname,
                       (s1, s2, s3)))
     return res
 
+def phBaseline(msname,
+               i, j,
+               chan={}):
+    """
+    Phase on the baseline between antennas i and j
+    """
+    ms=casac.casac.ms()
+    ms.open(msname)
+    if chan: ms.selectchannel(**chan)
+    # Note the use of ifraxis. This means time and interfoerometer
+    # number are separate dimensions in the returned data
+    dd=ms.getdata(["antenna1", "antenna2", "phase"], ifraxis=True)
+    ph=dd["phase"]; a1=dd["antenna1"]; a2=dd["antenna2"]
+    ms.close()
+    p1,s1=eitherWay(a1, a2, i, j)
+    return (ph[:,:,p1,:], s1)
+
+
 def closurePhTriads(msname,
                     triadlist,
                     chan={}):
