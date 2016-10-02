@@ -3,9 +3,11 @@ RSTs=  $(PWs:.rstw=.rst)
 HTMLs= $(PWs:.rstw=.html)
 PDFs=  $(PWs:.mdw=.pdf)
 
-PWEAVE=/data/p/casa-release-4.6.0-el6/bin/pweave
+CASADIR ?= /home/bnikolic/p/casa-release-4.6.0-el6
+
+PWEAVE=${CASADIR}/bin/pweave
 PPATH=../../clplot/:${PYTHONPATH}
-RST2HTML=/data/p/casa-release-4.6.0-el6/bin/rst2html5
+RST2HTML=${CASADIR}/bin/rst2html5
 
 .PHONY: default
 default: ${PDFs}

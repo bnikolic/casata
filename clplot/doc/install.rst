@@ -31,6 +31,10 @@ Then install clplot::
 
   ${CASADIR:? must be set}/bin/pip install --extra-index-url=https://www.mrao.cam.ac.uk/~bn204/soft/py clplot
 
+To run some of the examples supplied you will need the `pweave` package::
+
+  ${CASADIR}/bin/pip2.7 install --upgrade pweave pygments
+
 
 Note that https://www.mrao.cam.ac.uk/~bn204/soft/py is the remote
 software repository from which clplot will be downloaded
