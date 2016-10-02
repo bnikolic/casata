@@ -33,7 +33,7 @@ Then install clplot::
 
 To run some of the examples supplied you will need the `pweave` package::
 
-  ${CASADIR}/bin/pip2.7 install --upgrade pweave pygments
+  ${CASADIR}/bin/pip2.7 install --upgrade pweave pygments pandoc
 
 
 Note that https://www.mrao.cam.ac.uk/~bn204/soft/py is the remote
