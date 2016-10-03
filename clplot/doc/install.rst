@@ -31,9 +31,11 @@ Then install clplot::
 
   ${CASADIR:? must be set}/bin/pip install --extra-index-url=https://www.mrao.cam.ac.uk/~bn204/soft/py clplot
 
-To run some of the examples supplied you will need the `pweave` package::
+To be able to run some of the examples and recreate the full
+documentation you will also neeed the `pweave` package and
+friends. You can install these with::
 
-  ${CASADIR}/bin/pip2.7 install --upgrade pweave pygments pandoc
+  ${CASADIR}/bin/pip2.7 install --upgrade pweave pygments pandoc  sphinx
 
 
 Note that https://www.mrao.cam.ac.uk/~bn204/soft/py is the remote

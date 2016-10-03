@@ -1,9 +1,11 @@
 # Makefile for Sphinx documentation
 #
 
+CASADIR ?= /home/bnikolic/p/casa-release-4.6.0-el6
+
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = /data/p/casa-release-4.6.0-el6/bin/sphinx-build
+SPHINXBUILD   = ${CASADIR}/bin/sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
