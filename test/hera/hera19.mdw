@@ -104,3 +104,40 @@ plt.legend()
 plt.show()
 @
 
+
+Plot of one Quad
+----------------
+
+<<>>=
+#qd=[22, 9, 20, 81]
+qd=[20, 53, 31, 89]
+@
+<<caption="Closure amp">>=
+xx=clquants.closureAmpQd(msavg, qd)
+plt.plot(xx[0,:,0:-1], )
+plt.ylim([0.1,20])
+plt.yscale('log')
+plt.title("Closure amplitude on quad %i-%i-%i-%i" % tuple(qd))
+plt.show()
+@
+
+
+Multiple Quad
+-------------
+
+<<>>=
+qd=[ [105, 88,  9, 22],
+	 [9, 64, 53, 20],
+	 [20, 53, 31, 89],
+	 [89, 31, 65, 43]]
+@
+<<caption="Closure amp">>=
+
+for i in range(len(qd)):
+	xx=clquants.closureAmpQd(msavg, qd[i])
+	plt.plot(xx[0,:,0], label="quad %i-%i-%i-%i" % tuple(qd[i]))
+plt.ylim([0.1,5])
+plt.yscale('log')
+plt.legend()
+plt.show()
+@
