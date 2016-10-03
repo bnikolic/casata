@@ -12,7 +12,7 @@ The function to use is :py:func:`clio.closurePhTriad`
 
 Enter into CASA::
 
-  import clio
+  import clplot.clio as clio
   clio.closurePhTriad("/home/bnikolic/sciencedata/HERA-closure/centA.ms",  [22, 9, 20], "test.csv", integ=0)
 
 This will create a file *test.csv* containing the closure phase for
