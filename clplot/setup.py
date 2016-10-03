@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(name='clplot',
-      version='0.0.3',
-      description='Closure Plotting',
+      version='0.1',
+      description='CASA Calculation of closure quantities and plotting',
 #      url='http://github.com/storborg/funniest',
       author='Bojan Nikolic',
       author_email='b.nikolic@mrao.cam.ac.uk',
