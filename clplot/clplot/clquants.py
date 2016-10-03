@@ -33,6 +33,18 @@ def triadRows(a1, a2, tr):
     return ( (p1, p2, p3),
              (s1, s2, s3))
 
+def quadRows(a1, a2, qd):
+    """
+    Rows corresponding to a single quad qd
+    """
+    i,j,k,l=qd
+    a12,s1=eitherWay(a1, a2, i, j)
+    a34,s2=eitherWay(a1, a2, k, l)
+    a13,s3=eitherWay(a1, a2, i, k)
+    a24,s4=eitherWay(a1, a2, j, l)
+    return (a12, a34, a13, a24)
+    
+
 
 def triads(a1, a2, alist):
     """
@@ -212,6 +224,33 @@ def triadArea(msname,
     # The area for first itegration only is returned
     return {"area": numpy.array(clp)[:,0],
             "tr": numpy.array(tr)}
+
+def closureAmpQd(msname,
+                 qd,
+               chan={}):
+    """The closure amplitude on a single quad of antennas 
+
+    Computes V12 * V34 / (V13 * V24) [see Pearson & Readhead 1984]
+
+    :param msname: Measurement Set to measure
+    :param qd: List with the antenna IDs of the quad
+    :param chan: channel averaging (see ms.selectchannel)
+
+    """
+    ms=casac.casac.ms()
+    ms.open(msname)
+    ms.select({'antenna1': qd,
+               'antenna2': qd })
+    if chan: ms.selectchannel(**chan)
+    dd=ms.getdata(["antenna1",  "antenna2", "amplitude"], ifraxis=True)
+    aa=dd["amplitude"]
+    a1=dd["antenna1"]
+    a2=dd["antenna2"]    
+    (a12, a34, a13, a24)=quadRows(a1, a2, qd)
+    return aa[:,:,a12,:] * aa[:,:,a34,:] / (aa[:,:,a13,:] * aa[:,:,a24,:] )
+            
+
+
 
 def closureAmp(msname,
                alist,
