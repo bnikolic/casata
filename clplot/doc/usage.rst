@@ -1,8 +1,7 @@
 Usage of clplot
 ===============
 
-First see how to install `install <install.html>`__. Start CASA as
-normal.
+First see how to do :doc:`install`. Start CASA as normal, just make sure that you start the version that clplot was installed in. You should be able to do ``${CASADIR:? must be set}/bin/casa``
 
 
 Calculate and write out closure phase
