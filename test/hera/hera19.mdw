@@ -24,9 +24,9 @@ from heraanalysis import *
 
 # importuvfits("/data/archive/HERA-4/zen.2457458.53579.xx.HH.uvcU.uvfits", "/fast/temp/casaclosure2/centA.ms")
 
-msin="/fast/temp/casaclosure2/centA.ms"
+msin="/home/bnikolic/sciencedata/HERA-closure/centA.ms"
 
-msavg='/fast/temp/casaclosure2/centA-timeavg.ms'
+msavg='/home/bnikolic/sciencedata/HERA-closure/centA-timeavg.ms'
 
 # Created a time averaged dat st
 # split(msin, msavg, datacolumn="all",  timebin='185s')
