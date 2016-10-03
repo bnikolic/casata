@@ -15,7 +15,15 @@ clquants -- the computation module
 
 .. automodule:: clquants
    :members:
-   :undoc-members:      
+   :undoc-members:
+
+
+clio -- the I/O module
+----------------------
+
+.. automodule:: clio
+   :members:
+   :undoc-members:            
 		
 
 
