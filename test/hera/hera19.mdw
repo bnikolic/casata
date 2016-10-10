@@ -112,14 +112,52 @@ Plot of one Quad
 #qd=[22, 9, 20, 81]
 qd=[20, 53, 31, 89]
 @
-<<caption="Closure amp">>=
+<<caption="Closure amplitude spectrum for three consecutive 3-minute integrations on the same quad. Note the logarithmic axis ">>=
 xx=clquants.closureAmpQd(msavg, qd)
 plt.plot(xx[0,:,0:-1], )
 plt.ylim([0.1,20])
 plt.yscale('log')
-plt.title("Closure amplitude on quad %i-%i-%i-%i" % tuple(qd))
+plt.title("Closure amplitude on quad %i-%i-%i-%i " % tuple(qd))
 plt.show()
 @
+
+There is quite a large variation between (about 50% across much of the
+band) in the closure amplitude between consecutive integrations.
+
+
+<<>>=
+#qd=[22, 9, 20, 81]
+qd=[20, 53, 31, 89]
+@
+<<caption="Closure amplitude spectrum for 5  consecutive 10s integrations (i.e., non-averaged) on the same quad. Note the logarithmic axis ">>=
+xx=clquants.closureAmpQd(msin, qd)
+plt.plot(xx[0,:,10:15], )
+plt.ylim([0.1,20])
+plt.yscale('log')
+plt.title("Closure amplitude on quad %i-%i-%i-%i " % tuple(qd))
+plt.show()
+@
+
+Consecutive non-averaged integrations are clearly very close to each
+other so there is a secular effect.
+
+
+<<>>=
+qd=[20, 53, 31, 89]
+@
+<<caption="Closure amplitude spectrum for 5   integrations each of duration of 10s and separated by intervals of 100s on the same quad. Note the logarithmic axis ">>=
+xx=clquants.closureAmpQd(msin, qd)
+plt.plot(xx[0,:,10:50:10], )
+plt.ylim([0.1,20])
+plt.yscale('log')
+plt.title("Closure amplitude on quad %i-%i-%i-%i " % tuple(qd))
+plt.show()
+@
+
+Same variation is seen in the long term for the 10s integrations as
+for the 3-minute integrations. This excludes scintillation-type
+effects.
+
 
 
 Multiple Quad
@@ -131,12 +169,12 @@ qd=[ [105, 88,  9, 22],
 	 [20, 53, 31, 89],
 	 [89, 31, 65, 43]]
 @
-<<caption="Closure amp">>=
+<<caption="Closure amplitude spectrum for four different quads, all of the smallest size. Note the logarithmic axis">>=
 
 for i in range(len(qd)):
 	xx=clquants.closureAmpQd(msavg, qd[i])
 	plt.plot(xx[0,:,0], label="quad %i-%i-%i-%i" % tuple(qd[i]))
-plt.ylim([0.1,5])
+plt.ylim([0.1,20])
 plt.yscale('log')
 plt.legend()
 plt.show()
