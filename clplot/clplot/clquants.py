@@ -292,3 +292,20 @@ def closureAmp(msname,
             "quad": numpy.array(tr)} # Quad on which it was computed
             
 
+def reorrder(msname):
+    """
+    Re-order antenna 1 & 2 in each correlation so 2 is greater than 1
+    """
+    ms=casac.casac.table()
+    ms.open(msname, nomodify=False)
+    a1, a2, data = [ms.getcol(x) for x in ["ANTENNA1",  "ANTENNA2", "DATA"] ]
+    m=a1 > a2
+    data[:,:,m]=data[:,:,m].conj()
+    x=a2[m]
+    a2[m]=a1[m]
+    a1[m]=x
+    ms.putcol("ANTENNA1", a1)
+    ms.putcol("ANTENNA2", a2)
+    ms.putcol("DATA", data)
+    ms.flush()
+    ms.close()
