@@ -1,4 +1,4 @@
-PWs=   hera19.mdw
+PWs=   hera19.mdw hera-gc.mdw
 RSTs=  $(PWs:.rstw=.rst)
 HTMLs= $(PWs:.rstw=.html)
 PDFs=  $(PWs:.mdw=.pdf)
