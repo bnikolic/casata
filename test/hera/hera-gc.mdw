@@ -1,0 +1,70 @@
+% HERA19 - GC data
+% Bojan Nikolic
+% 12 October 2016 
+
+
+HERA - GC data
+==============
+
+<<>>=
+import os
+import numpy
+
+import matplotlib.pylab as plt
+
+from clplot import clplot, clquants
+from heraanalysis import *
+
+# importuvfits("/data/archive/HERA-5/zen.2457545.48011.xx.HH.uvcU.uvfits", "/fast/temp/casaclosure3/GC.ms")
+
+msin="/fast/temp/casaclosure3/GC.ms"
+msavg="/fast/temp/casaclosure3/GC-avg.ms"
+
+# split(msin, msavg, datacolumn="all",  timebin='185s')
+
+@
+@
+
+
+Closure phase comparison for multiple triads
+--------------------------------------------
+
+Closure phase plot:
+
+<<>>=
+trset=[ [72, 22, 105], [105, 9, 88], [22, 20, 9], [10, 43, 89],
+[9, 53, 64], [20, 31, 53], [89, 65, 31], [53, 104, 80], [31, 96, 104]]
+
+@
+<<caption="Comparison of redundant triangles from memo">>=
+
+xx=clquants.closurePhTriads(msavg, trset)
+tint=0
+for i in range(len(trset)):
+	plt.plot(xx[i,0,:,tint], label=("triad %i-%i-%i"%tuple(trset[i])))
+plt.legend()
+plt.show()
+@
+
+
+Multiple Quad Amplitude Closure
+-------------------------------
+
+Closure amp plot:
+
+<<>>=
+qd=[ [105, 88,  9, 22],
+	 [9, 64, 53, 20],
+	 [20, 53, 31, 89],
+	 [89, 31, 65, 43]]
+@
+<<caption="Closure amplitude spectrum for four different quads, all of the smallest size. Note the logarithmic axis">>=
+
+for i in range(len(qd)):
+	xx=clquants.closureAmpQd(msavg, qd[i])
+	plt.plot(xx[0,:,0], label="quad %i-%i-%i-%i" % tuple(qd[i]))
+plt.ylim([0.3,3])
+plt.yscale('log')
+plt.legend()
+plt.show()
+@
