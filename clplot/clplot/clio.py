@@ -2,6 +2,7 @@
 Closure quantities I/O utilities
 """
 
+import casac
 import clquants
 import numpy
 import pandas as pd
@@ -34,5 +35,25 @@ def closurePhTriad(msname,
                       'Ph'   : x[0,0,:,integ] })
     x.to_csv(fnameout)
     
+def dumpDelays(g,
+               fnameout):
+    tb=casac.casac.table()
+    tb.open(g)
+    d={}
+    for cname in ['TIME',
+                  'FIELD_ID',
+                  'SPECTRAL_WINDOW_ID',
+                  'ANTENNA1',
+                  'ANTENNA2',
+                  'INTERVAL',
+                  'SCAN_NUMBER',
+                  'OBSERVATION_ID']:
+        d[cname]=tb.getcol(cname)
+    for cname in  ['FPARAM',
+                   'PARAMERR',
+                   'FLAG',
+                   'SNR']:
+        d[cname+"X"]=tb.getcol(cname)[0,0]
+    pd.DataFrame(d).to_csv(fnameout)
 
 
