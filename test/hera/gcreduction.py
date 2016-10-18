@@ -27,6 +27,15 @@ if 0:
 if 1:
     fixvis(msin, mspr, phasecenter="J2000 17h45m40s -29d00m28s")
     flagdata(mspr, flagbackup=T,        mode='manual', antenna="82")
+    flagdata(mspr, flagbackup=T,        mode='manual', spw="0:0~65")
+    flagdata(mspr, flagbackup=T,        mode='manual', spw="0:377~387")
+    flagdata(mspr, flagbackup=T,        mode='manual', spw="0:850~854")
+    flagdata(mspr, flagbackup=T,        mode='manual', spw="0:930~1024")
+    flagdata(mspr, flagbackup=T,        mode='manual', spw="0:831")
+    flagdata(mspr, flagbackup=T,        mode='manual', spw="0:769")
+    flagdata(mspr, flagbackup=T,        mode='manual', spw="0:511")
+    flagdata(mspr, flagbackup=T,        mode='manual', spw="0:913")                
+    flagdata(mspr, autocorr=True)    
 
 if 0:
     gaincal(mspr, caltable="g18", gaintype='G', solint='inf',  refant="43", spw='0:400~600', minsnr=2, calmode='ap', gaintable="g16")
@@ -34,12 +43,31 @@ if 0:
     clean(mspr, "test3", niter=1000, mode="mfs", nterms=1, imsize=[400,400], cell=['300arcsec','300arcsec'],spw='0:150~350,0:400~700')
 
 if 1:    
-    gaincal(mspr, caltable="K5", gaintype='K', solint='inf',  refant="10", spw='0:100~130,0:400~600', minsnr=1)
-    gaincal(mspr, caltable="G5", gaintype='G', solint='inf',  refant="10", spw='0:100~130,0:400~600', minsnr=2, calmode='ap', gaintable="K5")
+    gaincal(mspr, caltable="K5", gaintype='K', solint='inf',  refant="10",  minsnr=1, spw='0:100~130,0:400~600')
+    gaincal(mspr, caltable="G5", gaintype='G', solint='inf',  refant="10",  minsnr=2, calmode='ap', gaintable="K5")
 
 if 1:
     applycal(mspr, gaintable=["K5", "G5"])
+
+if 0:
     clean(mspr, "test23", niter=1000, mode="mfs", nterms=1, imsize=[600,600], cell=['300arcsec','300arcsec'], spw='0:150~350,0:400~700')
+
+if 0: # Long baselines only
+    clean(mspr, "longb", niter=1000,
+          mode="mfs",
+          nterms=1,
+          imsize=[600,600],
+          cell=['300arcsec','300arcsec'],
+          spw='0:150~350,0:400~700',
+          uvrange="25~1000")
+
+if 0: 
+    clean(mspr, "longb-cube", niter=50,
+          mode="channel",
+          width=10,
+          imsize=[600,600],
+          cell=['300arcsec','300arcsec'],
+          spw='0:150~350,0:400~700', weighting="briggs", robust=0)        
 
 if 0:    
     uvcontsub(mspr, fitspw='0:100~130,0:400~600', solint="inf", fitorder=1, want_cont=True)
@@ -47,8 +75,8 @@ if 0:
 if 0:    
     bandpass(mspr, caltable="B5", solnorm=True,  gaintable=["K5", "G5"] , refant="10", minsnr=3)
 
-if 1: # Restrict to short baselines     
-    bandpass(mspr, caltable="B5", solnorm=True,  gaintable=["K5", "G5"] , refant="10", minsnr=3, uvrange="0~40")    
+if 0: # Restrict to short baselines     
+    bandpass(mspr, caltable="B5", solnorm=True,  gaintable=["K5", "G5"] , refant="10", minsnr=3, uvrange="0~30")    
 
 if 0:
     bandpass(mspr, caltable="B5-indx", solnorm=True,  gaintable=["K5", "G5"] , refant="10", minsnr=3)    
