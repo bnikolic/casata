@@ -16,18 +16,16 @@ def closurePhTriad(msname,
 
     Closure phase on an a specified triad for one integration.
 
-    :param triad: The triad to calculate the closure phase for. Order
-    given is respected, i.e., the closure phase is defined in the
-    sense of direction given by the triad.
+    Args:
 
-    :param fnameout: File to writhe the closure phase table to
-
-    :param integ: Integration to use. Should be Integer value. E.g.,
-    integ=3 means use the third integration in the input measurement
-
-    :param chan: Averaging over frequency channels. See the
-    documentation for split.
-
+       triad (tuple): The triad to calculate the closure phase for. Order
+                      given is respected, i.e., the closure phase is defined in the
+                       sense of direction given by the triad.
+       fnameout (str): File to writhe the closure phase table to
+       integ (int) : Integration to use. Should be Integer value. E.g.,
+                     integ=3 means use the third integration in the input measurement
+       chan (str): Averaging over frequency channels. See the
+                   documentation for split.
     """
     x=clquants.closurePhTriads(msname, [triad], chan=chan)
     nchn=x.shape[2]
