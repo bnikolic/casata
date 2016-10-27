@@ -12,20 +12,23 @@ def closurePhTriad(msname,
                    fnameout,
                    integ=0,
                    chan={}):
-    """
+    """Closure phase on an a specified triad for one integration.
 
-    Closure phase on an a specified triad for one integration.
+    :param tuple triad: The triad to calculate the closure phase
+                        for. Order given is respected, i.e., the
+                        closure phase is defined in the sense of
+                        direction given by the triad.
 
-    Args:
+    :param str fnameout: File to writhe the closure phase table to
 
-       triad (tuple): The triad to calculate the closure phase for. Order
-                      given is respected, i.e., the closure phase is defined in the
-                       sense of direction given by the triad.
-       fnameout (str): File to writhe the closure phase table to
-       integ (int) : Integration to use. Should be Integer value. E.g.,
-                     integ=3 means use the third integration in the input measurement
-       chan (str): Averaging over frequency channels. See the
-                   documentation for split.
+    :param int integ: Integration to use. Should be Integer
+                      value. E.g., integ=3 means use the third
+                      integration in the input measurement
+
+    :param str chan: Averaging over frequency channels. See the
+                     documentation for split.
+
+
     """
     x=clquants.closurePhTriads(msname, [triad], chan=chan)
     nchn=x.shape[2]
@@ -35,6 +38,7 @@ def closurePhTriad(msname,
     
 def dumpDelays(g,
                fnameout):
+    """ Dump delays from a calibration table to a text file"""
     tb=casac.casac.table()
     tb.open(g)
     d={}
