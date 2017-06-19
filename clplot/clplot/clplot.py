@@ -54,8 +54,8 @@ def ampSpec(d, qd=False):
 
 
 def phaseTime(d):
-    for i in range(d.shape[1]):
-        plt.plot(d[0,i,:])
+    for i in range(d.shape[0]):
+        plt.plot(d[i,0,:])
     plt.ylabel("Closure phase (rad)")            
     plt.xlabel("Time slot")
 

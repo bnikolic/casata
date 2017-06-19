@@ -76,7 +76,7 @@ def triads(a1, a2, alist):
 
 
 def closurePh(msname,
-              alist,
+              alist=None,
               chan={}):
     """
     The closure phase on a triad of antennas
@@ -90,6 +90,8 @@ def closurePh(msname,
     """
     ms=casac.casac.ms()
     ms.open(msname)
+    if alist is None:
+        alist=allAnts(ms)    
     ms.select({'antenna1': alist,
                'antenna2': alist })
     if chan: ms.selectchannel(**chan)
@@ -184,6 +186,46 @@ def triangleArea(u1, v1, u2, v2, u3, v3):
     p=0.5*(l1+l2+l3)
     return numpy.sqrt(p*(p-l1)*(p-l2)*(p-l3))
 
+def allAnts(ms):
+    """:returns: All antennas in the dataset ms"""
+    aa=ms.getdata(["antenna1", "antenna2"])
+    aa=numpy.append(aa["antenna1"],aa["antenna2"])
+    return numpy.unique(aa)
+
+def triadUV(msname,
+            alist=None,
+            chan={}):
+    """Compute the UVs of all triads
+    :param msname: Input measurement set
+
+    :param alist: List of antenna IDs. If none is supplied all
+    antennas are considered
+
+    :param chan: Dictionary with channel averaging specification. See
+                 the syntax for ms.selectchannel.
+
+    :returns: Dictionary with array of areas and triads that does areas correspond to
+
+    """
+    ms=casac.casac.ms()
+    ms.open(msname)
+    if alist is None:
+        alist=allAnts(ms)
+    ms.select({'antenna1': alist,
+               'antenna2': alist })
+    if chan: ms.selectchannel(**chan)
+    dd=ms.getdata(["antenna1", "antenna2", "u", "v"], ifraxis=True)
+    u,v =dd["u"], dd["v"]
+    rows, tr, signs=triads(dd["antenna1"],
+                           dd["antenna2"], alist)
+    res=[]
+    for p1,p2,p3 in rows:
+        res.append( ( (u[p1,:], v[p1,:]),
+                      (u[p2,:], v[p2,:]),
+                      (u[p3,:], v[p3,:])))
+    return numpy.array(tr), numpy.array(res)
+
+
 def triadArea(msname,
               alist=None,
               chan={}):
@@ -203,24 +245,12 @@ def triadArea(msname,
     :returns: Dictionary with array of areas and triads that does areas correspond to
 
     """
-    ms=casac.casac.ms()
-    ms.open(msname)
-    if alist is None:
-        aa=ms.getdata(["antenna1", "antenna2"])
-        aa=numpy.append(aa["antenna1"],aa["antenna2"])
-        alist=numpy.unique(aa)
-    ms.select({'antenna1': alist,
-               'antenna2': alist })
-    if chan: ms.selectchannel(**chan)
-    dd=ms.getdata(["antenna1", "antenna2", "u", "v"], ifraxis=True)
-    u,v =dd["u"], dd["v"]
-    rows, tr, signs=triads(dd["antenna1"],
-                           dd["antenna2"], alist)
+    tr, res=triadUV(msname, alist, chan)
     clp=[]
-    for p1,p2,p3 in rows:
-        clp.append(triangleArea(u[p1,:], v[p1,:],
-                                u[p2,:], v[p2,:],
-                                u[p3,:], v[p3,:]))
+    for p1,p2,p3 in res:
+        clp.append(triangleArea(p1[0], p1[1],
+                                p2[0], p2[1],
+                                p3[0], p3[1],))
     # The area for first itegration only is returned
     return {"area": numpy.array(clp)[:,0],
             "tr": numpy.array(tr)}

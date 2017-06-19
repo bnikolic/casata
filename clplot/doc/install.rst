@@ -3,13 +3,12 @@ Installation
 
 Configuration
 +++++++++++++
-
 CLPLOT installs itself into your CASA distribution. I have only tested
 it with CASA tar balls. You need to specify where CASA has been
 unpacked by setting a shell variable. For example, on my computer I
 paste the following into the shell::
 
-  export CASADIR=/data/p/casa-release-4.6.0-el6
+  export CASADIR=/data/p/casa-release-4.7.2-el7
 
 This has to be done in shell used to execute any of the other commands
 in this section.

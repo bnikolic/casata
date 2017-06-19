@@ -1,7 +1,7 @@
 # Makefile for Sphinx documentation
 #
 
-CASADIR ?= /home/bnikolic/p/casa-release-4.6.0-el6
+CASADIR ?= /data/p/casa-release-4.7.2-el7
 
 # You can set these variables from the command line.
 SPHINXOPTS    =

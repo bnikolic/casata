@@ -3,7 +3,7 @@ RSTs=  $(PWs:.rstw=.rst)
 HTMLs= $(PWs:.rstw=.html)
 PDFs=  $(PWs:.mdw=.pdf)
 
-CASADIR ?= /home/bnikolic/p/casa-release-4.6.0-el6
+CASADIR ?= /data/p/casa-release-4.7.2-el7
 
 PWEAVE=${CASADIR}/bin/pweave
 PPATH=../../clplot/:${PYTHONPATH}
